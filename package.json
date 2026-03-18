@@ -1,0 +1,16 @@
+{
+  "name": "hbo-stage-reveal",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "@apollo/server": "^4",
+    "cors": "^2",
+    "express": "^4",
+    "graphql": "^16",
+    "graphql-tag": "^2"
+  }
+}

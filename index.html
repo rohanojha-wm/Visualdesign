@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HBO Stage Reveal</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div id="app">
+
+    <!-- FRAME 1: Idle State -->
+    <section id="frame-idle" class="frame active">
+      <div class="bg-base"></div>
+      <div class="cinematic-bg"></div>
+      <div class="grain-overlay"></div>
+      <div class="ambient-light"></div>
+      <div class="idle-content">
+        <h1 class="idle-title">Find Something Great to Watch</h1>
+        <button class="btn btn-start" id="btn-start">Start the Show</button>
+      </div>
+    </section>
+
+    <!-- FRAME 2: HBO Intro Video -->
+    <section id="frame-credits" class="frame">
+      <div class="credits-bg"></div>
+      <div class="video-wrapper">
+        <div id="hbo-player"></div>
+      </div>
+    </section>
+
+    <!-- FRAME 3: Blackout + Spotlight -->
+    <section id="frame-transition" class="frame">
+      <div class="blackout-bg"></div>
+      <div class="spotlight-cone spotlight-cone--dim"></div>
+      <div class="particles" id="particles-transition"></div>
+    </section>
+
+    <!-- FRAME 4 & 5: Stage Reveal + Actions -->
+    <section id="frame-reveal" class="frame">
+      <div class="reveal-bg"></div>
+      <div class="cinematic-bg"></div>
+      <div class="stage-glow"></div>
+      <div class="spotlight-cone spotlight-cone--bright"></div>
+      <div class="spotlight-cone spotlight-cone--accent"></div>
+      <div class="spotlight-flare"></div>
+      <div class="swap-flash" id="swap-flash"></div>
+      <div class="theme-transition" id="theme-transition"></div>
+      <div class="grain-overlay"></div>
+      <div class="particles" id="particles-reveal"></div>
+
+      <div class="reveal-content">
+        <div class="content-card" id="content-card">
+          <div class="card-image" id="card-image">
+            <div class="card-placeholder" id="card-placeholder">
+              <div class="card-placeholder-icon"></div>
+            </div>
+          </div>
+        </div>
+        <div class="reveal-info" id="reveal-info">
+          <h2 class="reveal-title" id="reveal-title"></h2>
+          <p class="reveal-description" id="reveal-description"></p>
+        </div>
+        <div class="genre-picker" id="genre-picker">
+          <select class="genre-select" id="genre-select">
+            <option value="">Loading…</option>
+          </select>
+        </div>
+        <div class="reveal-actions" id="reveal-actions">
+          <button class="btn btn-primary" id="btn-watch">Watch Now</button>
+          <button class="btn btn-secondary" id="btn-another">Try Another</button>
+        </div>
+      </div>
+    </section>
+
+  </div>
+
+  <script src="https://www.youtube.com/iframe_api"></script>
+  <script src="script.js"></script>
+</body>
+</html>

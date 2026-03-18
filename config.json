@@ -1,0 +1,24 @@
+{
+  "genres": [
+    { "label": "All Genres",      "value": [] },
+    { "label": "Comedy",          "value": ["comedy"] },
+    { "label": "Drama",           "value": ["drama"] },
+    { "label": "Action",          "value": ["action"] },
+    { "label": "Sci-Fi",          "value": ["sci-fi"] },
+    { "label": "Horror",          "value": ["horror"] },
+    { "label": "Romance",         "value": ["romance"] },
+    { "label": "Thriller",        "value": ["thriller"] },
+    { "label": "Documentary",     "value": ["documentary"] },
+    { "label": "Fantasy",         "value": ["fantasy"] },
+    { "label": "Animation",       "value": ["animation"] },
+    { "label": "Crime",           "value": ["crime"] }
+  ],
+  "defaults": {
+    "country": "us",
+    "lang": "en",
+    "brands": [],
+    "franchises": [],
+    "contentType": "BOTH",
+    "limit": 50
+  }
+}
