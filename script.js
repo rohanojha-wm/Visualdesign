@@ -47,6 +47,22 @@
 
   // ─── Skin Engine ─────────────────────────────────
 
+  const BG_EXTENSIONS = ['.avif', '.webp', '.jpg', '.png'];
+
+  function detectBackground(skinId) {
+    const base = 'skins/' + skinId + '/background';
+    return new Promise((resolve) => {
+      let found = false;
+      let checked = 0;
+      for (const ext of BG_EXTENSIONS) {
+        const img = new Image();
+        img.onload = () => { if (!found) { found = true; resolve(base + ext); } };
+        img.onerror = () => { checked++; if (checked === BG_EXTENSIONS.length && !found) resolve(null); };
+        img.src = base + ext;
+      }
+    });
+  }
+
   async function loadSkin(skinId) {
     const manifestRes = await fetch('skins/' + skinId + '/skin.json');
     const manifest = await manifestRes.json();
@@ -64,6 +80,17 @@
     link.id = 'skin-stylesheet';
     document.head.appendChild(link);
     skinLinkEl = link;
+
+    const bgUrl = await detectBackground(skinId);
+    const skinBg = $('#skin-bg');
+    if (bgUrl) {
+      skinBg.style.backgroundImage = 'url(' + bgUrl + ')';
+      skinBg.style.backgroundSize = 'cover';
+      skinBg.style.backgroundPosition = 'center';
+      skinBg.style.backgroundRepeat = 'no-repeat';
+    } else {
+      skinBg.style.backgroundImage = '';
+    }
 
     $('#app').dataset.skin = skinId;
 
@@ -95,7 +122,7 @@
       scatterAnimFrame = null;
     }
 
-    const logos = manifest.scatterLogos;
+    const logos = manifest.scatterFiles;
     if (!logos || logos.length === 0) return;
 
     const count = manifest.scatterCount || 16;

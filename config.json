@@ -1,6 +1,6 @@
 {
   "activeSkin": "default",
-  "availableSkins": ["default", "batman", "harry-potter", "halloween"],
+  "availableSkins": ["default", "batman", "harry-potter", "halloween", "game-of-thrones"],
   "genres": [
     { "label": "All Genres",      "value": [] },
     { "label": "Comedy",          "value": ["comedy"] },

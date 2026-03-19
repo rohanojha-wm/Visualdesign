@@ -11,6 +11,6 @@
   },
   "introVideoId": "O08PQRA6MLo",
   "particleColor": "255, 140, 20",
-  "scatterLogos": ["assets/pumpkin-glow.svg", "assets/bat.svg", "assets/ghost.svg"],
+  "scatterFiles": ["scatter/icon-1.svg", "scatter/icon-2.svg", "scatter/icon-3.svg"],
   "scatterCount": 38
 }

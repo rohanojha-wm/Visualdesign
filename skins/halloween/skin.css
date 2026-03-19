@@ -16,12 +16,6 @@
   --particle-rgb: 255, 140, 20;
 }
 
-/* ── Spooky Halloween background ── */
-#app[data-skin="halloween"] .skin-bg {
-  background: url('background.avif') center/cover no-repeat;
-  opacity: 0.18;
-}
-
 /* Hide default spotlight elements */
 #app[data-skin="halloween"] .spotlight-cone,
 #app[data-skin="halloween"] .spotlight-flare,
@@ -46,7 +40,7 @@
   transform: translateX(-50%);
   width: 80px;
   height: 80px;
-  background: url('assets/pumpkin-glow.svg') center/contain no-repeat;
+  background: url('hero.svg') center/contain no-repeat;
   opacity: 0.3;
   filter: blur(2px);
   animation: pumpkinIdlePulse 3s ease-in-out infinite alternate;
@@ -70,7 +64,7 @@
   transform: translate(-50%, -50%);
   width: 150px;
   height: 150px;
-  background: url('assets/pumpkin-glow.svg') center/contain no-repeat;
+  background: url('hero.svg') center/contain no-repeat;
   opacity: 0;
   filter: blur(2px) brightness(1.3);
   animation: pumpkinTransition 1.5s ease 0.2s forwards;
@@ -114,7 +108,7 @@
   transform: translateX(-50%);
   width: 160px;
   height: 160px;
-  background: url('assets/pumpkin-glow.svg') center/contain no-repeat;
+  background: url('hero.svg') center/contain no-repeat;
   opacity: 0;
   z-index: 12;
   filter: brightness(1.2) drop-shadow(0 0 30px rgba(224, 104, 0, 0.5));

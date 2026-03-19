@@ -11,6 +11,6 @@
   },
   "introVideoId": "O08PQRA6MLo",
   "particleColor": "255, 215, 100",
-  "scatterLogos": ["assets/lightning-bolt.svg", "assets/star.svg"],
+  "scatterFiles": ["scatter/icon-1.svg", "scatter/icon-2.svg"],
   "scatterCount": 40
 }

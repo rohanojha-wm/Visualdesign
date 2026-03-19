@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 60 50" fill="#c0a040">
+  <!-- Crown -->
+  <polygon points="5,40 10,15 18,28 25,8 30,25 35,8 42,28 50,15 55,40"/>
+  <rect x="5" y="40" width="50" height="8" rx="2" fill="#b09030"/>
+  <circle cx="18" cy="14" r="2.5" fill="#c0a040"/>
+  <circle cx="30" cy="7" r="3" fill="#d4a017"/>
+  <circle cx="42" cy="14" r="2.5" fill="#c0a040"/>
+</svg>

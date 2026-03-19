@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 200" fill="none">
+  <!-- Longclaw-style sword -->
+  <rect x="30" y="0" width="4" height="130" rx="1" fill="#b0c0d0"/>
+  <rect x="28" y="8" width="8" height="2" rx="0.5" fill="#d0d8e0"/>
+  <line x1="32" y1="0" x2="32" y2="130" stroke="#e0e8f0" stroke-width="0.5" opacity="0.5"/>
+  <rect x="16" y="130" width="32" height="6" rx="2" fill="#8a7a60"/>
+  <rect x="18" y="131" width="28" height="4" rx="1.5" fill="#a08c6c"/>
+  <rect x="26" y="136" width="12" height="28" rx="3" fill="#5a4a38"/>
+  <rect x="27" y="137" width="10" height="26" rx="2.5" fill="#6a5a44"/>
+  <line x1="32" y1="140" x2="32" y2="160" stroke="#4a3a28" stroke-width="1.5"/>
+  <ellipse cx="32" cy="166" rx="8" ry="4" fill="#8a7a60"/>
+</svg>

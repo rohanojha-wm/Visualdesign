@@ -1,0 +1,165 @@
+/* Game of Thrones: Iron Throne skin */
+
+#app[data-skin="game-of-thrones"] {
+  --accent: #B8860B;
+  --accent-rgb: 184, 134, 11;
+  --bg-tint-rgb: 140, 100, 20;
+  --reveal-bg-top: #08060a;
+  --reveal-bg-mid: #0e0a06;
+  --reveal-bg-bot: #140e08;
+  --cinematic-grad: linear-gradient(170deg, #060408 0%, #100a06 30%, #0a0804 60%, #181008 100%);
+  --btn-primary-bg: #8a6a10;
+  --btn-primary-color: #f0e0c0;
+  --btn-primary-hover: #b08a20;
+  --btn-secondary-border: #5a4a10;
+  --btn-secondary-color: #c0a860;
+  --particle-rgb: 180, 140, 60;
+}
+
+/* Hide default spotlight elements */
+#app[data-skin="game-of-thrones"] .spotlight-cone,
+#app[data-skin="game-of-thrones"] .spotlight-flare,
+#app[data-skin="game-of-thrones"] .stage-glow {
+  display: none !important;
+}
+
+/* Idle — brooding, fiery atmosphere */
+#app[data-skin="game-of-thrones"] .skin-hero--idle {
+  display: block;
+  background:
+    radial-gradient(ellipse at 50% 40%, rgba(184, 134, 11, 0.06) 0%, transparent 50%),
+    radial-gradient(ellipse at 30% 70%, rgba(140, 40, 20, 0.05) 0%, transparent 40%),
+    radial-gradient(ellipse at 70% 70%, rgba(140, 40, 20, 0.05) 0%, transparent 40%);
+}
+
+#app[data-skin="game-of-thrones"] .skin-hero--idle::before {
+  content: '';
+  position: absolute;
+  top: 8%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 60px;
+  height: 180px;
+  background: url('hero.svg') center/contain no-repeat;
+  opacity: 0.2;
+  filter: blur(2px) drop-shadow(0 0 15px rgba(184, 134, 11, 0.3));
+  animation: gotIdlePulse 5s ease-in-out infinite alternate;
+}
+
+@keyframes gotIdlePulse {
+  0% { opacity: 0.12; filter: blur(3px) drop-shadow(0 0 10px rgba(184, 134, 11, 0.2)); }
+  100% { opacity: 0.25; filter: blur(1px) drop-shadow(0 0 20px rgba(184, 134, 11, 0.4)); }
+}
+
+/* Transition — sword descending through fire */
+#app[data-skin="game-of-thrones"] .skin-hero--transition {
+  display: block;
+  background:
+    radial-gradient(ellipse at 50% 50%, rgba(180, 100, 20, 0.08) 0%, transparent 60%);
+}
+
+#app[data-skin="game-of-thrones"] .skin-hero--transition::before {
+  content: '';
+  position: absolute;
+  top: 10%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 50px;
+  height: 160px;
+  background: url('hero.svg') center/contain no-repeat;
+  opacity: 0;
+  filter: drop-shadow(0 0 30px rgba(255, 140, 20, 0.5));
+  animation: gotSwordDescent 1.8s ease 0.2s forwards;
+}
+
+#app[data-skin="game-of-thrones"] .skin-hero--transition::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 600px;
+  height: 600px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(184, 134, 11, 0.08) 0%, rgba(140, 40, 20, 0.04) 40%, transparent 70%);
+  opacity: 0;
+  animation: gotFireGlow 1.5s ease 0.6s forwards;
+}
+
+@keyframes gotSwordDescent {
+  0% { opacity: 0; transform: translateX(-50%) translateY(-40px) scale(0.8); filter: blur(6px) brightness(2); }
+  40% { opacity: 1; filter: blur(2px) brightness(1.5) drop-shadow(0 0 40px rgba(255, 160, 40, 0.6)); }
+  100% { opacity: 0.9; transform: translateX(-50%) translateY(0) scale(1); filter: blur(1px) brightness(1.2) drop-shadow(0 0 25px rgba(255, 140, 20, 0.4)); }
+}
+
+@keyframes gotFireGlow {
+  0% { opacity: 0; }
+  100% { opacity: 1; }
+}
+
+/* Reveal — sword hovering above the card */
+#app[data-skin="game-of-thrones"] .skin-hero--reveal {
+  display: block;
+}
+
+#app[data-skin="game-of-thrones"] .skin-hero--reveal::before {
+  content: '';
+  position: absolute;
+  top: 1%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 45px;
+  height: 150px;
+  background: url('hero.svg') center/contain no-repeat;
+  opacity: 0;
+  z-index: 12;
+  filter: drop-shadow(0 0 20px rgba(184, 134, 11, 0.4));
+}
+
+#app[data-skin="game-of-thrones"] .skin-hero--reveal::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 500px;
+  height: 100%;
+  background:
+    radial-gradient(ellipse at 50% 8%, rgba(184, 134, 11, 0.12) 0%, rgba(140, 40, 20, 0.05) 30%, transparent 55%);
+  opacity: 0;
+  z-index: 10;
+}
+
+#app[data-skin="game-of-thrones"] .skin-hero--reveal.animate::before {
+  animation: gotRevealIn 1.4s ease 0.3s forwards, gotSwordFloat 4s ease-in-out 1.8s infinite alternate;
+}
+
+#app[data-skin="game-of-thrones"] .skin-hero--reveal.animate::after {
+  animation: gotGlowIn 1.6s ease 0.5s forwards, gotGlowPulse 5s ease-in-out 2s infinite alternate;
+}
+
+@keyframes gotRevealIn {
+  0% { opacity: 0; transform: translateX(-50%) translateY(-30px) scale(0.7); filter: blur(6px) brightness(2); }
+  100% { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); filter: blur(0) brightness(1) drop-shadow(0 0 20px rgba(184, 134, 11, 0.4)); }
+}
+
+@keyframes gotSwordFloat {
+  0% { transform: translateX(-50%) translateY(0); }
+  100% { transform: translateX(-50%) translateY(-6px); }
+}
+
+@keyframes gotGlowIn {
+  0% { opacity: 0; }
+  100% { opacity: 1; }
+}
+
+@keyframes gotGlowPulse {
+  0% { opacity: 0.6; }
+  100% { opacity: 1; }
+}
+
+/* Ember-like particles */
+#app[data-skin="game-of-thrones"] .particle {
+  border-radius: 1px;
+  transform: rotate(45deg);
+}

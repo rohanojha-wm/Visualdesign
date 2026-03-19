@@ -11,6 +11,6 @@
   },
   "introVideoId": "O08PQRA6MLo",
   "particleColor": "80, 120, 180",
-  "scatterLogos": ["batman.svg"],
+  "scatterFiles": ["scatter/icon-1.svg"],
   "scatterCount": 35
 }

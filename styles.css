@@ -146,20 +146,20 @@ html, body {
   position: fixed;
   inset: 0;
   pointer-events: none;
-  z-index: 100;
+  z-index: 200;
   opacity: 0;
   transition: opacity 0.8s ease;
 }
 
 #app[data-skin] .skin-bg {
-  opacity: 1;
+  opacity: 0.15;
 }
 
 .skin-scatter {
   position: fixed;
   inset: 0;
   pointer-events: none;
-  z-index: 101;
+  z-index: 201;
   overflow: hidden;
 }
 
