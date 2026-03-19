@@ -139,21 +139,84 @@ html, body {
 }
 
 /* ═══════════════════════════════════════════
-   Genre Dropdown
+   Skin Hero Slots (empty by default)
    ═══════════════════════════════════════════ */
 
-.genre-picker {
-  position: relative;
+.skin-bg {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 100;
+  opacity: 0;
+  transition: opacity 0.8s ease;
+}
+
+#app[data-skin] .skin-bg {
+  opacity: 1;
+}
+
+.skin-scatter {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 101;
+  overflow: hidden;
+}
+
+.scatter-icon {
+  position: absolute;
+  opacity: 0;
+  transition: opacity 0.6s ease;
+}
+
+.scatter-icon img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.scatter-icon.visible {
+  opacity: 1;
+}
+
+.skin-hero {
+  display: none;
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 11;
+}
+
+/* ═══════════════════════════════════════════
+   Pickers Row (Genre + Skin)
+   ═══════════════════════════════════════════ */
+
+.pickers-row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  justify-content: center;
   margin-top: 16px;
   opacity: 0;
   transform: translateY(12px);
 }
 
-.genre-picker.animate {
+.pickers-row.animate {
   animation: fadeUp 0.7s ease 0.6s forwards;
 }
 
-.genre-select {
+.genre-picker,
+.skin-picker {
+  position: relative;
+}
+
+.genre-picker.animate,
+.skin-picker.animate {
+  /* handled by parent .pickers-row.animate */
+}
+
+.genre-select,
+.skin-select {
   appearance: none;
   -webkit-appearance: none;
   background: rgba(var(--accent-rgb), 0.08);
@@ -175,18 +238,21 @@ html, body {
   background-position: right 16px center;
 }
 
-.genre-select:hover {
+.genre-select:hover,
+.skin-select:hover {
   background-color: rgba(var(--accent-rgb), 0.15);
   border-color: rgba(var(--accent-rgb), 0.4);
 }
 
-.genre-select:focus {
+.genre-select:focus,
+.skin-select:focus {
   outline: none;
   border-color: var(--accent);
   box-shadow: 0 0 0 2px rgba(var(--accent-rgb), 0.25);
 }
 
-.genre-select option {
+.genre-select option,
+.skin-select option {
   background: #1a1a2e;
   color: var(--text-primary);
   padding: 8px;

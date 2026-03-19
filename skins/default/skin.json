@@ -1,0 +1,16 @@
+{
+  "id": "default",
+  "name": "Stage Spotlight",
+  "idle": {
+    "title": "Find Something Great to Watch",
+    "buttonText": "Start the Show"
+  },
+  "reveal": {
+    "watchButtonText": "Watch Now",
+    "anotherButtonText": "Try Another"
+  },
+  "introVideoId": "O08PQRA6MLo",
+  "particleColor": "255, 255, 255",
+  "scatterLogos": ["assets/diamond.svg"],
+  "scatterCount": 28
+}

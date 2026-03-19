@@ -1,0 +1,6 @@
+/* Default skin: Stage Spotlight */
+
+#app[data-skin="default"] .skin-bg {
+  background: url('background.jpg') center/cover no-repeat;
+  opacity: 0.18;
+}

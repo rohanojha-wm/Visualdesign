@@ -11,6 +11,8 @@
 </head>
 <body>
   <div id="app">
+    <div class="skin-bg" id="skin-bg"></div>
+    <div class="skin-scatter" id="skin-scatter"></div>
 
     <!-- FRAME 1: Idle State -->
     <section id="frame-idle" class="frame active">
@@ -18,8 +20,9 @@
       <div class="cinematic-bg"></div>
       <div class="grain-overlay"></div>
       <div class="ambient-light"></div>
+      <div class="skin-hero skin-hero--idle"></div>
       <div class="idle-content">
-        <h1 class="idle-title">Find Something Great to Watch</h1>
+        <h1 class="idle-title" id="idle-title">Find Something Great to Watch</h1>
         <button class="btn btn-start" id="btn-start">Start the Show</button>
       </div>
     </section>
@@ -36,6 +39,7 @@
     <section id="frame-transition" class="frame">
       <div class="blackout-bg"></div>
       <div class="spotlight-cone spotlight-cone--dim"></div>
+      <div class="skin-hero skin-hero--transition"></div>
       <div class="particles" id="particles-transition"></div>
     </section>
 
@@ -47,6 +51,7 @@
       <div class="spotlight-cone spotlight-cone--bright"></div>
       <div class="spotlight-cone spotlight-cone--accent"></div>
       <div class="spotlight-flare"></div>
+      <div class="skin-hero skin-hero--reveal"></div>
       <div class="swap-flash" id="swap-flash"></div>
       <div class="theme-transition" id="theme-transition"></div>
       <div class="grain-overlay"></div>
@@ -64,10 +69,17 @@
           <h2 class="reveal-title" id="reveal-title"></h2>
           <p class="reveal-description" id="reveal-description"></p>
         </div>
-        <div class="genre-picker" id="genre-picker">
-          <select class="genre-select" id="genre-select">
-            <option value="">Loading…</option>
-          </select>
+        <div class="pickers-row" id="pickers-row">
+          <div class="genre-picker" id="genre-picker">
+            <select class="genre-select" id="genre-select">
+              <option value="">Loading…</option>
+            </select>
+          </div>
+          <div class="skin-picker" id="skin-picker">
+            <select class="skin-select" id="skin-select">
+              <option value="default">Stage Spotlight</option>
+            </select>
+          </div>
         </div>
         <div class="reveal-actions" id="reveal-actions">
           <button class="btn btn-primary" id="btn-watch">Watch Now</button>

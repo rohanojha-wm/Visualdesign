@@ -1,0 +1,170 @@
+/* Harry Potter: Wizarding World skin */
+
+#app[data-skin="harry-potter"] {
+  --accent: #B8860B;
+  --accent-rgb: 184, 134, 11;
+  --bg-tint-rgb: 120, 90, 20;
+  --reveal-bg-top: #06040a;
+  --reveal-bg-mid: #0e0a18;
+  --reveal-bg-bot: #100c1e;
+  --cinematic-grad: linear-gradient(170deg, #080614 0%, #100c20 30%, #0a0818 60%, #140e28 100%);
+  --btn-primary-bg: #B8860B;
+  --btn-primary-color: #fff8e0;
+  --btn-primary-hover: #d4a020;
+  --btn-secondary-border: #6a5010;
+  --btn-secondary-color: #d0c080;
+  --particle-rgb: 255, 215, 100;
+}
+
+/* ── Wizarding World background ── */
+#app[data-skin="harry-potter"] .skin-bg {
+  background: url('background.jpg') center/cover no-repeat;
+  opacity: 0.18;
+}
+
+/* Hide default spotlight elements */
+#app[data-skin="harry-potter"] .spotlight-cone,
+#app[data-skin="harry-potter"] .spotlight-flare,
+#app[data-skin="harry-potter"] .stage-glow {
+  display: none !important;
+}
+
+/* Idle — subtle magical atmosphere */
+#app[data-skin="harry-potter"] .skin-hero--idle {
+  display: block;
+  background:
+    radial-gradient(ellipse at 50% 40%, rgba(184, 134, 11, 0.06) 0%, transparent 50%),
+    radial-gradient(ellipse at 30% 60%, rgba(100, 60, 180, 0.04) 0%, transparent 40%),
+    radial-gradient(ellipse at 70% 60%, rgba(100, 60, 180, 0.04) 0%, transparent 40%);
+}
+
+#app[data-skin="harry-potter"] .skin-hero--idle::before {
+  content: '\2728';
+  position: absolute;
+  top: 15%;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 48px;
+  opacity: 0.3;
+  filter: blur(1px);
+  animation: wandIdlePulse 4s ease-in-out infinite alternate;
+}
+
+@keyframes wandIdlePulse {
+  0% { opacity: 0.2; transform: translateX(-50%) scale(0.9); filter: blur(2px); }
+  100% { opacity: 0.4; transform: translateX(-50%) scale(1.1); filter: blur(0px); }
+}
+
+/* Transition — Lumos spell expanding */
+#app[data-skin="harry-potter"] .skin-hero--transition {
+  display: block;
+}
+
+#app[data-skin="harry-potter"] .skin-hero--transition::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #fffbe0 0%, #ffd700 30%, rgba(184, 134, 11, 0.4) 60%, transparent 80%);
+  opacity: 0;
+  animation: lumosExpand 1.5s ease 0.3s forwards;
+}
+
+#app[data-skin="harry-potter"] .skin-hero--transition::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 600px;
+  height: 600px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 248, 220, 0.08) 0%, rgba(184, 134, 11, 0.04) 40%, transparent 70%);
+  opacity: 0;
+  animation: lumosGlow 1.5s ease 0.6s forwards;
+}
+
+@keyframes lumosExpand {
+  0% { opacity: 0; width: 10px; height: 10px; }
+  30% { opacity: 1; width: 60px; height: 60px; }
+  100% { opacity: 0.8; width: 200px; height: 200px; filter: blur(20px); }
+}
+
+@keyframes lumosGlow {
+  0% { opacity: 0; }
+  100% { opacity: 1; }
+}
+
+/* Reveal — wand beam from bottom-right toward card */
+#app[data-skin="harry-potter"] .skin-hero--reveal {
+  display: block;
+}
+
+#app[data-skin="harry-potter"] .skin-hero--reveal::before {
+  content: '';
+  position: absolute;
+  bottom: 5%;
+  right: 10%;
+  width: 80px;
+  height: 300px;
+  background: url('assets/wand-glow.svg') center/contain no-repeat;
+  opacity: 0;
+  z-index: 12;
+  transform: rotate(25deg);
+  transform-origin: bottom center;
+  filter: drop-shadow(0 0 20px rgba(255, 215, 0, 0.4));
+}
+
+#app[data-skin="harry-potter"] .skin-hero--reveal::after {
+  content: '';
+  position: absolute;
+  bottom: 15%;
+  right: 8%;
+  width: 600px;
+  height: 400px;
+  background:
+    radial-gradient(ellipse at 80% 90%, rgba(255, 215, 0, 0.15) 0%, rgba(184, 134, 11, 0.06) 30%, transparent 55%),
+    radial-gradient(ellipse at 50% 50%, rgba(255, 248, 220, 0.04) 0%, transparent 50%);
+  opacity: 0;
+  z-index: 10;
+  transform: rotate(-5deg);
+}
+
+#app[data-skin="harry-potter"] .skin-hero--reveal.animate::before {
+  animation: wandRevealIn 1.2s ease 0.2s forwards, wandFloat 3s ease-in-out 1.5s infinite alternate;
+}
+
+#app[data-skin="harry-potter"] .skin-hero--reveal.animate::after {
+  animation: wandBeamIn 1.5s ease 0.4s forwards, wandBeamPulse 4s ease-in-out 2s infinite alternate;
+}
+
+@keyframes wandRevealIn {
+  0% { opacity: 0; transform: rotate(45deg) translateY(40px); }
+  60% { opacity: 1; transform: rotate(22deg) translateY(-5px); }
+  100% { opacity: 1; transform: rotate(25deg) translateY(0); }
+}
+
+@keyframes wandFloat {
+  0% { transform: rotate(24deg) translateY(2px); }
+  100% { transform: rotate(26deg) translateY(-4px); }
+}
+
+@keyframes wandBeamIn {
+  0% { opacity: 0; }
+  100% { opacity: 1; }
+}
+
+@keyframes wandBeamPulse {
+  0% { opacity: 0.7; }
+  100% { opacity: 1; }
+}
+
+/* Magical sparkle particles override */
+#app[data-skin="harry-potter"] .particle {
+  border-radius: 2px;
+  transform: rotate(45deg);
+}

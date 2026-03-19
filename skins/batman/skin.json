@@ -1,0 +1,16 @@
+{
+  "id": "batman",
+  "name": "The Dark Knight",
+  "idle": {
+    "title": "What Will You Watch Tonight, Gotham?",
+    "buttonText": "Unmask a Pick"
+  },
+  "reveal": {
+    "watchButtonText": "Watch Now",
+    "anotherButtonText": "Another Lead"
+  },
+  "introVideoId": "O08PQRA6MLo",
+  "particleColor": "80, 120, 180",
+  "scatterLogos": ["batman.svg"],
+  "scatterCount": 35
+}

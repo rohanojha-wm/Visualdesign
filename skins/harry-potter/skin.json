@@ -1,0 +1,16 @@
+{
+  "id": "harry-potter",
+  "name": "Wizarding World",
+  "idle": {
+    "title": "Discover Your Next Magical Watch",
+    "buttonText": "Cast Lumos"
+  },
+  "reveal": {
+    "watchButtonText": "Watch Now",
+    "anotherButtonText": "Try Another Spell"
+  },
+  "introVideoId": "O08PQRA6MLo",
+  "particleColor": "255, 215, 100",
+  "scatterLogos": ["assets/lightning-bolt.svg", "assets/star.svg"],
+  "scatterCount": 40
+}

@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 400">
+  <defs>
+    <radialGradient id="sparkGlow" cx="50%" cy="5%" r="60%">
+      <stop offset="0%" stop-color="#fff8e0" stop-opacity="0.9"/>
+      <stop offset="30%" stop-color="#ffd700" stop-opacity="0.4"/>
+      <stop offset="70%" stop-color="#b8860b" stop-opacity="0.1"/>
+      <stop offset="100%" stop-color="transparent" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect x="96" y="120" width="8" height="260" rx="4" fill="#5c3a1e" transform="rotate(-8, 100, 250)"/>
+  <rect x="90" y="110" width="20" height="30" rx="3" fill="#3d2510" transform="rotate(-8, 100, 125)"/>
+  <circle cx="100" cy="20" r="18" fill="url(#sparkGlow)"/>
+  <circle cx="100" cy="20" r="8" fill="#fffbe0" opacity="0.9"/>
+  <circle cx="100" cy="20" r="3" fill="#ffffff"/>
+</svg>

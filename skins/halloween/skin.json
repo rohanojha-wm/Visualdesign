@@ -1,0 +1,16 @@
+{
+  "id": "halloween",
+  "name": "Halloween Night",
+  "idle": {
+    "title": "Something Wicked This Way Streams",
+    "buttonText": "Trick or Watch"
+  },
+  "reveal": {
+    "watchButtonText": "Watch Now",
+    "anotherButtonText": "Next Fright"
+  },
+  "introVideoId": "O08PQRA6MLo",
+  "particleColor": "255, 140, 20",
+  "scatterLogos": ["assets/pumpkin-glow.svg", "assets/bat.svg", "assets/ghost.svg"],
+  "scatterCount": 38
+}
