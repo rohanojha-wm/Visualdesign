@@ -9,10 +9,10 @@
   font-display: swap;
 }
 
-#app[data-skin="default"] .idle-title {
+.hbo-stage[data-skin="default"] .idle-title {
   font-size: 42px;
 }
 
-#app[data-skin="default"] .reveal-title {
+.hbo-stage[data-skin="default"] .reveal-title {
   font-size: 38px;
 }

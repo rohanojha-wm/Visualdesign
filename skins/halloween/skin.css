@@ -8,7 +8,7 @@
   font-display: swap;
 }
 
-#app[data-skin="halloween"] {
+.hbo-stage[data-skin="halloween"] {
   --accent: #E06800;
   --accent-rgb: 224, 104, 0;
   --bg-tint-rgb: 180, 80, 0;
@@ -25,14 +25,14 @@
 }
 
 /* Hide default spotlight elements */
-#app[data-skin="halloween"] .spotlight-cone,
-#app[data-skin="halloween"] .spotlight-flare,
-#app[data-skin="halloween"] .stage-glow {
+.hbo-stage[data-skin="halloween"] .spotlight-cone,
+.hbo-stage[data-skin="halloween"] .spotlight-flare,
+.hbo-stage[data-skin="halloween"] .stage-glow {
   display: none !important;
 }
 
 /* Idle — eerie orange atmosphere with floating jack-o-lantern */
-#app[data-skin="halloween"] .skin-hero--idle {
+.hbo-stage[data-skin="halloween"] .skin-hero--idle {
   display: block;
   background:
     radial-gradient(ellipse at 50% 60%, rgba(224, 104, 0, 0.06) 0%, transparent 50%),
@@ -40,7 +40,7 @@
     radial-gradient(ellipse at 80% 80%, rgba(100, 0, 0, 0.04) 0%, transparent 40%);
 }
 
-#app[data-skin="halloween"] .skin-hero--idle::before {
+.hbo-stage[data-skin="halloween"] .skin-hero--idle::before {
   content: '';
   position: absolute;
   top: 10%;
@@ -60,11 +60,11 @@
 }
 
 /* Transition — pumpkin glow expanding from center */
-#app[data-skin="halloween"] .skin-hero--transition {
+.hbo-stage[data-skin="halloween"] .skin-hero--transition {
   display: block;
 }
 
-#app[data-skin="halloween"] .skin-hero--transition::before {
+.hbo-stage[data-skin="halloween"] .skin-hero--transition::before {
   content: '';
   position: absolute;
   top: 50%;
@@ -78,7 +78,7 @@
   animation: pumpkinTransition 1.5s ease 0.2s forwards;
 }
 
-#app[data-skin="halloween"] .skin-hero--transition::after {
+.hbo-stage[data-skin="halloween"] .skin-hero--transition::after {
   content: '';
   position: absolute;
   top: 50%;
@@ -104,11 +104,11 @@
 }
 
 /* Reveal — floating pumpkin above the card */
-#app[data-skin="halloween"] .skin-hero--reveal {
+.hbo-stage[data-skin="halloween"] .skin-hero--reveal {
   display: block;
 }
 
-#app[data-skin="halloween"] .skin-hero--reveal::before {
+.hbo-stage[data-skin="halloween"] .skin-hero--reveal::before {
   content: '';
   position: absolute;
   top: 2%;
@@ -122,7 +122,7 @@
   filter: brightness(1.2) drop-shadow(0 0 30px rgba(224, 104, 0, 0.5));
 }
 
-#app[data-skin="halloween"] .skin-hero--reveal::after {
+.hbo-stage[data-skin="halloween"] .skin-hero--reveal::after {
   content: '';
   position: absolute;
   top: 0;
@@ -136,11 +136,11 @@
   z-index: 10;
 }
 
-#app[data-skin="halloween"] .skin-hero--reveal.animate::before {
+.hbo-stage[data-skin="halloween"] .skin-hero--reveal.animate::before {
   animation: pumpkinRevealIn 1.2s ease 0.3s forwards, pumpkinFloat 3s ease-in-out 1.5s infinite alternate;
 }
 
-#app[data-skin="halloween"] .skin-hero--reveal.animate::after {
+.hbo-stage[data-skin="halloween"] .skin-hero--reveal.animate::after {
   animation: pumpkinGlowIn 1.5s ease 0.5s forwards, pumpkinGlowPulse 4s ease-in-out 2s infinite alternate;
 }
 
@@ -165,15 +165,15 @@
   100% { opacity: 1; }
 }
 
-#app[data-skin="halloween"] .idle-title {
+.hbo-stage[data-skin="halloween"] .idle-title {
   font-size: 44px;
 }
 
-#app[data-skin="halloween"] .reveal-title {
+.hbo-stage[data-skin="halloween"] .reveal-title {
   font-size: 40px;
 }
 
 /* Spooky particle shapes */
-#app[data-skin="halloween"] .particle {
+.hbo-stage[data-skin="halloween"] .particle {
   border-radius: 1px;
 }

@@ -3,116 +3,109 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>HBO Stage Reveal</title>
+  <title>HBO Stage Reveal — Component Demo</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="hbo-stage-reveal.css">
   <link rel="preload" href="config.json" as="fetch" crossorigin>
   <link rel="preload" href="skins/default/skin.json" as="fetch" crossorigin>
   <link rel="preload" href="skins/default/skin.css" as="style">
   <link rel="preload" href="skins/default/HBOLogo.ttf" as="font" type="font/ttf" crossorigin>
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { width: 100%; min-height: 100%; background: #0a0a0a; font-family: 'Inter', sans-serif; color: #fff; overflow-x: hidden; }
+
+    .demo-page { min-height: 100%; }
+
+    .demo-header {
+      text-align: center;
+      padding: 32px 20px 20px;
+    }
+    .demo-header h1 {
+      font-size: 24px;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+      color: #fff;
+    }
+    .demo-header p {
+      margin-top: 8px;
+      font-size: 14px;
+      color: #888;
+    }
+
+    .demo-stack {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .demo-cell {
+      width: 100%;
+      height: 100vh;
+      position: relative;
+    }
+
+    .demo-cell-stage {
+      width: 100%;
+      height: 100%;
+    }
+
+    .demo-cell-label {
+      position: absolute;
+      top: 12px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 600;
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.35);
+      background: rgba(0,0,0,0.5);
+      padding: 4px 14px;
+      border-radius: 20px;
+      backdrop-filter: blur(8px);
+      pointer-events: none;
+    }
+  </style>
 </head>
 <body>
-  <!-- HBO Loading Overlay -->
-  <div id="loading-overlay" class="loading-overlay">
-    <div class="loading-grain"></div>
-    <div class="loading-spotlight"></div>
-    <div class="loading-content">
-      <div class="loading-logo">HBO</div>
-      <div class="loading-bar">
-        <div class="loading-bar-fill"></div>
+  <div class="demo-page">
+    <div class="demo-header">
+      <h1>HBO Stage Reveal Component</h1>
+      <p>Two independent instances stacked full-width, each with its own skin and video player.</p>
+    </div>
+
+    <div class="demo-stack">
+      <div class="demo-cell">
+        <div class="demo-cell-label">Instance 1 — Default Skin</div>
+        <div class="demo-cell-stage" id="stage-1"></div>
+      </div>
+      <div class="demo-cell">
+        <div class="demo-cell-label">Instance 2 — Batman Skin</div>
+        <div class="demo-cell-stage" id="stage-2"></div>
       </div>
     </div>
   </div>
 
-  <div id="app">
-    <div class="skin-picker-corner" id="skin-picker">
-      <select class="skin-select" id="skin-select">
-        <option value="default">Stage Spotlight</option>
-      </select>
-    </div>
+  <script type="module">
+    import { HBOStageReveal } from './hbo-stage-reveal.js';
 
-    <div class="skin-bg" id="skin-bg"></div>
-    <div class="skin-scatter" id="skin-scatter"></div>
+    const stage1 = new HBOStageReveal(document.getElementById('stage-1'), {
+      skin: 'default',
+      showSkinPicker: true,
+      showGenrePicker: true,
+      width: '100%',
+      height: '100%',
+    });
 
-    <!-- FRAME 1: Idle State -->
-    <section id="frame-idle" class="frame active">
-      <div class="bg-base"></div>
-      <div class="cinematic-bg"></div>
-      <div class="grain-overlay"></div>
-      <div class="ambient-light"></div>
-      <div class="skin-hero skin-hero--idle"></div>
-      <div class="idle-content">
-        <h1 class="idle-title" id="idle-title">Find Something Great to Watch</h1>
-        <button class="btn btn-start" id="btn-start">Start the Show</button>
-      </div>
-    </section>
-
-    <!-- FRAME 2: HBO Intro Video -->
-    <section id="frame-credits" class="frame">
-      <div class="credits-bg"></div>
-      <div class="video-wrapper">
-        <div id="hbo-player"></div>
-      </div>
-    </section>
-
-    <!-- FRAME 3: Blackout + Spotlight -->
-    <section id="frame-transition" class="frame">
-      <div class="blackout-bg"></div>
-      <div class="spotlight-cone spotlight-cone--dim"></div>
-      <div class="skin-hero skin-hero--transition"></div>
-      <div class="particles" id="particles-transition"></div>
-      <div class="transition-spinner" id="transition-spinner">
-        <div class="transition-spinner-logo">HBO</div>
-        <div class="transition-spinner-ring"></div>
-      </div>
-    </section>
-
-    <!-- FRAME 4 & 5: Stage Reveal + Actions -->
-    <section id="frame-reveal" class="frame">
-      <div class="reveal-bg"></div>
-      <div class="cinematic-bg"></div>
-      <div class="stage-glow"></div>
-      <div class="spotlight-cone spotlight-cone--bright"></div>
-      <div class="spotlight-cone spotlight-cone--accent"></div>
-      <div class="spotlight-flare"></div>
-      <div class="skin-hero skin-hero--reveal"></div>
-      <div class="swap-flash" id="swap-flash"></div>
-      <div class="theme-transition" id="theme-transition"></div>
-      <div class="grain-overlay"></div>
-      <div class="particles" id="particles-reveal"></div>
-
-      <div class="reveal-content">
-        <div class="content-card" id="content-card">
-          <div class="card-image" id="card-image">
-            <div class="card-placeholder" id="card-placeholder">
-              <div class="card-placeholder-icon"></div>
-            </div>
-          </div>
-        </div>
-        <div class="reveal-info" id="reveal-info">
-          <h2 class="reveal-title" id="reveal-title"></h2>
-          <p class="reveal-description" id="reveal-description"></p>
-        </div>
-        <div class="pickers-row" id="pickers-row">
-          <span class="genre-label">I am in the mood for some</span>
-          <div class="genre-picker" id="genre-picker">
-            <select class="genre-select" id="genre-select">
-              <option value="">Loading…</option>
-            </select>
-          </div>
-        </div>
-        <div class="reveal-actions" id="reveal-actions">
-          <button class="btn btn-primary" id="btn-watch">Watch Now</button>
-          <button class="btn btn-secondary" id="btn-another">Try Another</button>
-        </div>
-      </div>
-    </section>
-
-  </div>
-
-  <script src="https://www.youtube.com/iframe_api"></script>
-  <script src="script.js"></script>
+    const stage2 = new HBOStageReveal(document.getElementById('stage-2'), {
+      skin: 'batman',
+      showSkinPicker: true,
+      showGenrePicker: true,
+      width: '100%',
+      height: '100%',
+    });
+  </script>
 </body>
 </html>

@@ -8,7 +8,7 @@
   font-display: swap;
 }
 
-#app[data-skin="harry-potter"] {
+.hbo-stage[data-skin="harry-potter"] {
   --accent: #B8860B;
   --accent-rgb: 184, 134, 11;
   --bg-tint-rgb: 120, 90, 20;
@@ -25,14 +25,14 @@
 }
 
 /* Hide default spotlight elements */
-#app[data-skin="harry-potter"] .spotlight-cone,
-#app[data-skin="harry-potter"] .spotlight-flare,
-#app[data-skin="harry-potter"] .stage-glow {
+.hbo-stage[data-skin="harry-potter"] .spotlight-cone,
+.hbo-stage[data-skin="harry-potter"] .spotlight-flare,
+.hbo-stage[data-skin="harry-potter"] .stage-glow {
   display: none !important;
 }
 
 /* Idle — subtle magical atmosphere */
-#app[data-skin="harry-potter"] .skin-hero--idle {
+.hbo-stage[data-skin="harry-potter"] .skin-hero--idle {
   display: block;
   background:
     radial-gradient(ellipse at 50% 40%, rgba(184, 134, 11, 0.06) 0%, transparent 50%),
@@ -40,7 +40,7 @@
     radial-gradient(ellipse at 70% 60%, rgba(100, 60, 180, 0.04) 0%, transparent 40%);
 }
 
-#app[data-skin="harry-potter"] .skin-hero--idle::before {
+.hbo-stage[data-skin="harry-potter"] .skin-hero--idle::before {
   content: '\2728';
   position: absolute;
   top: 15%;
@@ -58,11 +58,11 @@
 }
 
 /* Transition — Lumos spell expanding */
-#app[data-skin="harry-potter"] .skin-hero--transition {
+.hbo-stage[data-skin="harry-potter"] .skin-hero--transition {
   display: block;
 }
 
-#app[data-skin="harry-potter"] .skin-hero--transition::before {
+.hbo-stage[data-skin="harry-potter"] .skin-hero--transition::before {
   content: '';
   position: absolute;
   top: 50%;
@@ -76,7 +76,7 @@
   animation: lumosExpand 1.5s ease 0.3s forwards;
 }
 
-#app[data-skin="harry-potter"] .skin-hero--transition::after {
+.hbo-stage[data-skin="harry-potter"] .skin-hero--transition::after {
   content: '';
   position: absolute;
   top: 50%;
@@ -102,11 +102,11 @@
 }
 
 /* Reveal — wand beam from bottom-right toward card */
-#app[data-skin="harry-potter"] .skin-hero--reveal {
+.hbo-stage[data-skin="harry-potter"] .skin-hero--reveal {
   display: block;
 }
 
-#app[data-skin="harry-potter"] .skin-hero--reveal::before {
+.hbo-stage[data-skin="harry-potter"] .skin-hero--reveal::before {
   content: '';
   position: absolute;
   bottom: 5%;
@@ -121,7 +121,7 @@
   filter: drop-shadow(0 0 20px rgba(255, 215, 0, 0.4));
 }
 
-#app[data-skin="harry-potter"] .skin-hero--reveal::after {
+.hbo-stage[data-skin="harry-potter"] .skin-hero--reveal::after {
   content: '';
   position: absolute;
   bottom: 15%;
@@ -136,11 +136,11 @@
   transform: rotate(-5deg);
 }
 
-#app[data-skin="harry-potter"] .skin-hero--reveal.animate::before {
+.hbo-stage[data-skin="harry-potter"] .skin-hero--reveal.animate::before {
   animation: wandRevealIn 1.2s ease 0.2s forwards, wandFloat 3s ease-in-out 1.5s infinite alternate;
 }
 
-#app[data-skin="harry-potter"] .skin-hero--reveal.animate::after {
+.hbo-stage[data-skin="harry-potter"] .skin-hero--reveal.animate::after {
   animation: wandBeamIn 1.5s ease 0.4s forwards, wandBeamPulse 4s ease-in-out 2s infinite alternate;
 }
 
@@ -165,16 +165,16 @@
   100% { opacity: 1; }
 }
 
-#app[data-skin="harry-potter"] .idle-title {
+.hbo-stage[data-skin="harry-potter"] .idle-title {
   font-size: 40px;
 }
 
-#app[data-skin="harry-potter"] .reveal-title {
+.hbo-stage[data-skin="harry-potter"] .reveal-title {
   font-size: 36px;
 }
 
 /* Magical sparkle particles override */
-#app[data-skin="harry-potter"] .particle {
+.hbo-stage[data-skin="harry-potter"] .particle {
   border-radius: 2px;
   transform: rotate(45deg);
 }

@@ -8,7 +8,7 @@
   font-display: swap;
 }
 
-#app[data-skin="batman"] {
+.hbo-stage[data-skin="batman"] {
   --accent: #1A4A7A;
   --accent-rgb: 26, 74, 122;
   --bg-tint-rgb: 20, 50, 90;
@@ -25,20 +25,20 @@
 }
 
 /* Hide the default spotlight elements */
-#app[data-skin="batman"] .spotlight-cone,
-#app[data-skin="batman"] .spotlight-flare,
-#app[data-skin="batman"] .stage-glow {
+.hbo-stage[data-skin="batman"] .spotlight-cone,
+.hbo-stage[data-skin="batman"] .spotlight-flare,
+.hbo-stage[data-skin="batman"] .stage-glow {
   display: none !important;
 }
 
 /* Bat Signal — projected on clouds in transition frame */
-#app[data-skin="batman"] .skin-hero--transition {
+.hbo-stage[data-skin="batman"] .skin-hero--transition {
   display: block;
   background:
     radial-gradient(ellipse at 50% 40%, rgba(200, 220, 240, 0.06) 0%, transparent 60%);
 }
 
-#app[data-skin="batman"] .skin-hero--transition::before {
+.hbo-stage[data-skin="batman"] .skin-hero--transition::before {
   content: '';
   position: absolute;
   top: 8%;
@@ -60,11 +60,11 @@
 }
 
 /* Bat Signal — hovering above card in reveal frame */
-#app[data-skin="batman"] .skin-hero--reveal {
+.hbo-stage[data-skin="batman"] .skin-hero--reveal {
   display: block;
 }
 
-#app[data-skin="batman"] .skin-hero--reveal::before {
+.hbo-stage[data-skin="batman"] .skin-hero--reveal::before {
   content: '';
   position: absolute;
   top: 3%;
@@ -79,7 +79,7 @@
   z-index: 12;
 }
 
-#app[data-skin="batman"] .skin-hero--reveal::after {
+.hbo-stage[data-skin="batman"] .skin-hero--reveal::after {
   content: '';
   position: absolute;
   top: 0;
@@ -92,11 +92,11 @@
   opacity: 0;
 }
 
-#app[data-skin="batman"] .skin-hero--reveal.animate::before {
+.hbo-stage[data-skin="batman"] .skin-hero--reveal.animate::before {
   animation: batRevealIn 1.5s ease 0.3s forwards, batRevealPulse 4s ease-in-out 2s infinite alternate;
 }
 
-#app[data-skin="batman"] .skin-hero--reveal.animate::after {
+.hbo-stage[data-skin="batman"] .skin-hero--reveal.animate::after {
   animation: batGlowIn 1.8s ease 0.5s forwards, batGlowPulse 5s ease-in-out 2s infinite alternate;
 }
 
@@ -121,7 +121,7 @@
 }
 
 /* Idle screen — dark Gotham atmosphere */
-#app[data-skin="batman"] .skin-hero--idle {
+.hbo-stage[data-skin="batman"] .skin-hero--idle {
   display: block;
   background:
     radial-gradient(ellipse at 50% 30%, rgba(40, 80, 140, 0.08) 0%, transparent 50%),
@@ -129,7 +129,7 @@
     radial-gradient(ellipse at 70% 80%, rgba(20, 40, 80, 0.06) 0%, transparent 40%);
 }
 
-#app[data-skin="batman"] .skin-hero--idle::before {
+.hbo-stage[data-skin="batman"] .skin-hero--idle::before {
   content: '';
   position: absolute;
   top: 5%;
