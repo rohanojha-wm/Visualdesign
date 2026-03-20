@@ -1,2 +1,18 @@
 /* Default skin: Stage Spotlight
    Uses the base spotlight/glow elements as-is. No hero overrides needed. */
+
+@font-face {
+  font-family: 'HBO Logo';
+  src: url('HBOLogo.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+#app[data-skin="default"] .idle-title {
+  font-size: 42px;
+}
+
+#app[data-skin="default"] .reveal-title {
+  font-size: 38px;
+}

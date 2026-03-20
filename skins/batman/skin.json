@@ -1,6 +1,8 @@
 {
   "id": "batman",
   "name": "The Dark Knight",
+  "fontFamily": "'Batman Forever', sans-serif",
+  "moodText": "Tonight, Gotham needs",
   "idle": {
     "title": "What Will You Watch Tonight, Gotham?",
     "buttonText": "Unmask a Pick"
@@ -12,5 +14,5 @@
   "introVideoId": "O08PQRA6MLo",
   "particleColor": "80, 120, 180",
   "scatterFiles": ["scatter/icon-1.svg"],
-  "scatterCount": 35
+  "scatterCount": 80
 }

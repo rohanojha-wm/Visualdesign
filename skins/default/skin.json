@@ -1,6 +1,8 @@
 {
   "id": "default",
   "name": "Stage Spotlight",
+  "fontFamily": "'HBO Logo', 'Inter', sans-serif",
+  "moodText": "I'm in the mood for some",
   "idle": {
     "title": "Find Something Great to Watch",
     "buttonText": "Start the Show"
@@ -12,5 +14,5 @@
   "introVideoId": "O08PQRA6MLo",
   "particleColor": "255, 255, 255",
   "scatterFiles": ["scatter/icon-1.svg"],
-  "scatterCount": 28
+  "scatterCount": 65
 }

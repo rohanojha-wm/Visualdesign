@@ -1,5 +1,13 @@
 /* Batman: The Dark Knight skin */
 
+@font-face {
+  font-family: 'Batman Forever';
+  src: url('BatmanForever.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
 #app[data-skin="batman"] {
   --accent: #1A4A7A;
   --accent-rgb: 26, 74, 122;

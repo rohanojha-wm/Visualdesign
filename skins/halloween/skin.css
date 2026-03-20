@@ -1,5 +1,13 @@
 /* Halloween Night skin */
 
+@font-face {
+  font-family: 'Hallowen';
+  src: url('Hallowen.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
 #app[data-skin="halloween"] {
   --accent: #E06800;
   --accent-rgb: 224, 104, 0;
@@ -155,6 +163,14 @@
 @keyframes pumpkinGlowPulse {
   0% { opacity: 0.7; }
   100% { opacity: 1; }
+}
+
+#app[data-skin="halloween"] .idle-title {
+  font-size: 44px;
+}
+
+#app[data-skin="halloween"] .reveal-title {
+  font-size: 40px;
 }
 
 /* Spooky particle shapes */

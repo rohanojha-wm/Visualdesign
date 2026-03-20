@@ -1,5 +1,13 @@
 /* Harry Potter: Wizarding World skin */
 
+@font-face {
+  font-family: 'Harry P';
+  src: url('HarryP.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
 #app[data-skin="harry-potter"] {
   --accent: #B8860B;
   --accent-rgb: 184, 134, 11;
@@ -155,6 +163,14 @@
 @keyframes wandBeamPulse {
   0% { opacity: 0.7; }
   100% { opacity: 1; }
+}
+
+#app[data-skin="harry-potter"] .idle-title {
+  font-size: 40px;
+}
+
+#app[data-skin="harry-potter"] .reveal-title {
+  font-size: 36px;
 }
 
 /* Magical sparkle particles override */

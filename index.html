@@ -8,9 +8,31 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
+  <link rel="preload" href="config.json" as="fetch" crossorigin>
+  <link rel="preload" href="skins/default/skin.json" as="fetch" crossorigin>
+  <link rel="preload" href="skins/default/skin.css" as="style">
+  <link rel="preload" href="skins/default/HBOLogo.ttf" as="font" type="font/ttf" crossorigin>
 </head>
 <body>
+  <!-- HBO Loading Overlay -->
+  <div id="loading-overlay" class="loading-overlay">
+    <div class="loading-grain"></div>
+    <div class="loading-spotlight"></div>
+    <div class="loading-content">
+      <div class="loading-logo">HBO</div>
+      <div class="loading-bar">
+        <div class="loading-bar-fill"></div>
+      </div>
+    </div>
+  </div>
+
   <div id="app">
+    <div class="skin-picker-corner" id="skin-picker">
+      <select class="skin-select" id="skin-select">
+        <option value="default">Stage Spotlight</option>
+      </select>
+    </div>
+
     <div class="skin-bg" id="skin-bg"></div>
     <div class="skin-scatter" id="skin-scatter"></div>
 
@@ -41,6 +63,10 @@
       <div class="spotlight-cone spotlight-cone--dim"></div>
       <div class="skin-hero skin-hero--transition"></div>
       <div class="particles" id="particles-transition"></div>
+      <div class="transition-spinner" id="transition-spinner">
+        <div class="transition-spinner-logo">HBO</div>
+        <div class="transition-spinner-ring"></div>
+      </div>
     </section>
 
     <!-- FRAME 4 & 5: Stage Reveal + Actions -->
@@ -70,14 +96,10 @@
           <p class="reveal-description" id="reveal-description"></p>
         </div>
         <div class="pickers-row" id="pickers-row">
+          <span class="genre-label">I am in the mood for some</span>
           <div class="genre-picker" id="genre-picker">
             <select class="genre-select" id="genre-select">
               <option value="">Loading…</option>
-            </select>
-          </div>
-          <div class="skin-picker" id="skin-picker">
-            <select class="skin-select" id="skin-select">
-              <option value="default">Stage Spotlight</option>
             </select>
           </div>
         </div>

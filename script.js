@@ -18,6 +18,7 @@
   let currentSkinId = null;
   let currentSkinManifest = null;
   let skinLinkEl = null;
+  let skinFontLinkEl = null;
 
   const $ = (sel) => document.querySelector(sel);
 
@@ -78,8 +79,14 @@
     link.rel = 'stylesheet';
     link.href = 'skins/' + skinId + '/skin.css';
     link.id = 'skin-stylesheet';
+    const cssLoaded = new Promise((resolve) => {
+      link.onload = resolve;
+      link.onerror = resolve;
+    });
     document.head.appendChild(link);
     skinLinkEl = link;
+
+    await cssLoaded;
 
     const bgUrl = await detectBackground(skinId);
     const skinBg = $('#skin-bg');
@@ -94,8 +101,33 @@
 
     $('#app').dataset.skin = skinId;
 
+    await loadSkinFont(manifest);
     applySkinText(manifest);
     spawnScatterLogos(skinId, manifest);
+  }
+
+  async function loadSkinFont(manifest) {
+    if (skinFontLinkEl) {
+      skinFontLinkEl.remove();
+      skinFontLinkEl = null;
+    }
+
+    if (manifest.fontUrl) {
+      const link = document.createElement('link');
+      link.rel = 'stylesheet';
+      link.href = manifest.fontUrl;
+      link.id = 'skin-font-stylesheet';
+      const fontLoaded = new Promise((resolve) => {
+        link.onload = resolve;
+        link.onerror = resolve;
+      });
+      document.head.appendChild(link);
+      skinFontLinkEl = link;
+      await fontLoaded;
+    }
+
+    const fontFamily = manifest.fontFamily || "'Inter', sans-serif";
+    document.documentElement.style.setProperty('--font-display', fontFamily);
   }
 
   function applySkinText(manifest) {
@@ -106,6 +138,10 @@
     if (manifest.reveal) {
       if (manifest.reveal.watchButtonText) $('#btn-watch').textContent = manifest.reveal.watchButtonText;
       if (manifest.reveal.anotherButtonText) $('#btn-another').textContent = manifest.reveal.anotherButtonText;
+    }
+    if (manifest.moodText) {
+      const label = $('.genre-label');
+      if (label) label.textContent = manifest.moodText;
     }
     if (manifest.particleColor) {
       document.documentElement.style.setProperty('--particle-rgb', manifest.particleColor);
@@ -351,7 +387,38 @@
     { id: 'mock-20', title: 'The Conjuring', description: 'Paranormal investigators help a family terrorized by a dark presence in their farmhouse.', image: null, year: '2013', genre: 'Horror, Thriller', rating: 'R', trailerUrl: null },
   ];
 
+  const CATALOG_CACHE_KEY = 'hbo_catalog_cache';
+  const CATALOG_CACHE_TTL = 30 * 60 * 1000;
+
+  function getCachedCatalog() {
+    try {
+      const raw = localStorage.getItem(CATALOG_CACHE_KEY);
+      if (!raw) return null;
+      const cached = JSON.parse(raw);
+      if (Date.now() - cached.ts > CATALOG_CACHE_TTL) {
+        localStorage.removeItem(CATALOG_CACHE_KEY);
+        return null;
+      }
+      return cached.items;
+    } catch { return null; }
+  }
+
+  function setCachedCatalog(items) {
+    try {
+      localStorage.setItem(CATALOG_CACHE_KEY, JSON.stringify({ ts: Date.now(), items }));
+    } catch { /* quota exceeded — ignore */ }
+  }
+
   async function loadCatalog() {
+    const cached = getCachedCatalog();
+    if (cached && cached.length > 0) {
+      fullCatalog = cached;
+      filterByGenre();
+      catalogReady = true;
+      refreshCatalogInBackground();
+      return allItems;
+    }
+
     const d = appConfig ? appConfig.defaults : {};
     try {
       const data = await gql(WHAT_SHOULD_I_WATCH, {
@@ -365,6 +432,7 @@
       });
       if (data && data.whatShouldIWatch && data.whatShouldIWatch.items) {
         fullCatalog = data.whatShouldIWatch.items.map(normalize);
+        setCachedCatalog(fullCatalog);
       }
     } catch (err) {
       console.warn('GraphQL unreachable, using mock catalog:', err.message);
@@ -377,6 +445,29 @@
     filterByGenre();
     catalogReady = fullCatalog.length > 0;
     return allItems;
+  }
+
+  async function refreshCatalogInBackground() {
+    const d = appConfig ? appConfig.defaults : {};
+    try {
+      const data = await gql(WHAT_SHOULD_I_WATCH, {
+        country: d.country || 'us',
+        lang: d.lang || 'en',
+        genres: [],
+        brands: d.brands || [],
+        franchises: d.franchises || [],
+        contentType: d.contentType || 'BOTH',
+        limit: d.limit || 50,
+      });
+      if (data && data.whatShouldIWatch && data.whatShouldIWatch.items) {
+        const fresh = data.whatShouldIWatch.items.map(normalize);
+        if (fresh.length > 0) {
+          fullCatalog = fresh;
+          setCachedCatalog(fullCatalog);
+          filterByGenre();
+        }
+      }
+    } catch { /* silent background refresh */ }
   }
 
   function filterByGenre() {
@@ -457,6 +548,17 @@
     }
   }
 
+  function setIframeVisible(visible) {
+    if (!hboPlayer || !hboPlayer.getIframe) return;
+    const iframe = hboPlayer.getIframe();
+    if (!iframe) return;
+    if (visible) {
+      iframe.classList.add('playing');
+    } else {
+      iframe.classList.remove('playing');
+    }
+  }
+
   function onPlayerReady() {
     prebufferVideo();
     if (pendingPlay) {
@@ -474,15 +576,22 @@
   function startVideoPlayback() {
     if (hboPlayer && typeof hboPlayer.seekTo === 'function') {
       hboPlayer.seekTo(0, true);
+      setIframeVisible(true);
       hboPlayer.playVideo();
     }
   }
 
   async function afterVideoEnds() {
+    setIframeVisible(false);
+
     const frameCredits = $('#frame-credits');
     const frameTransition = $('#frame-transition');
     const frameReveal = $('#frame-reveal');
     const spotlightDim = $('.spotlight-cone--dim');
+    const spinner = $('#transition-spinner');
+
+    switchFrame(frameCredits, frameTransition);
+    spinner.classList.add('visible');
 
     if (!catalogReady && catalogPromise) {
       await catalogPromise;
@@ -494,11 +603,13 @@
     createParticles($('#particles-transition'), 15);
     createParticles($('#particles-reveal'), 25);
 
-    switchFrame(frameCredits, frameTransition);
     await wait(200);
     spotlightDim.classList.add('animate');
 
-    await wait(1000);
+    await wait(800);
+    spinner.classList.remove('visible');
+
+    await wait(200);
 
     switchFrame(frameTransition, frameReveal);
     spotlightDim.classList.remove('animate');
@@ -718,6 +829,13 @@
     });
   }
 
+  function dismissLoadingOverlay() {
+    const overlay = $('#loading-overlay');
+    if (!overlay) return;
+    overlay.classList.add('fade-out');
+    setTimeout(() => overlay.classList.add('hidden'), 800);
+  }
+
   async function init() {
     try {
       const res = await fetch('config.json');
@@ -741,9 +859,10 @@
     catalogPromise = loadCatalog();
 
     populateSkinDropdown(appConfig.availableSkins);
-    loadSkin(appConfig.activeSkin).then(() => {
-      $('#skin-select').value = appConfig.activeSkin;
-    });
+    await loadSkin(appConfig.activeSkin);
+    $('#skin-select').value = appConfig.activeSkin;
+
+    dismissLoadingOverlay();
   }
 
   // Event listeners
