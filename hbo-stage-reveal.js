@@ -1,11 +1,16 @@
+/** Maps first genre value from config → `data-theme` slug (must match hbo-stage-reveal.css) */
 const GENRE_THEMES = {
-  'comedy': 'comedy',
-  'drama': 'drama',
-  'action': 'action',
-  'horror': 'horror',
-  'thriller': 'thrillers',
-  'documentary': 'documentaries',
-  'crime': 'crime',
+  comedy: 'comedy',
+  drama: 'drama',
+  action: 'action',
+  'sci-fi': 'sci-fi',
+  horror: 'horror',
+  romance: 'romance',
+  thriller: 'thriller',
+  documentary: 'documentary',
+  fantasy: 'fantasy',
+  animation: 'animation',
+  crime: 'crime',
 };
 
 const BG_EXTENSIONS = ['.avif', '.webp', '.jpg', '.png'];
@@ -135,6 +140,98 @@ function forceReflow(el) {
   return el.offsetWidth;
 }
 
+async function loadImageForShareCard(url) {
+  if (!url) return null;
+  try {
+    const res = await fetch(url, { mode: 'cors', credentials: 'omit' });
+    if (!res.ok) return null;
+    const blob = await res.blob();
+    const objectUrl = URL.createObjectURL(blob);
+    const img = await new Promise((resolve, reject) => {
+      const im = new Image();
+      im.onload = () => resolve(im);
+      im.onerror = reject;
+      im.src = objectUrl;
+    });
+    URL.revokeObjectURL(objectUrl);
+    return img;
+  } catch {
+    try {
+      const im = new Image();
+      im.crossOrigin = 'anonymous';
+      await new Promise((resolve, reject) => {
+        im.onload = resolve;
+        im.onerror = reject;
+        im.src = url;
+      });
+      return im;
+    } catch {
+      return null;
+    }
+  }
+}
+
+function wrapCanvasOverflowLine(ctx, lines, words, startIndex, maxWidth, maxLines) {
+  let rest = words.slice(startIndex).join(' ');
+  while (rest.length > 4 && ctx.measureText(rest + '…').width > maxWidth) {
+    rest = rest.slice(0, -1);
+  }
+  lines.push(rest + '…');
+  return lines.slice(0, maxLines);
+}
+
+function wrapCanvasLines(ctx, text, maxWidth, maxLines) {
+  const words = String(text).trim().split(/\s+/).filter(Boolean);
+  const lines = [];
+  let line = '';
+  for (let i = 0; i < words.length; i++) {
+    const word = words[i];
+    const test = line ? line + ' ' + word : word;
+    if (ctx.measureText(test).width <= maxWidth) {
+      line = test;
+    } else {
+      if (line) lines.push(line);
+      line = word;
+      if (lines.length >= maxLines - 1) {
+        return wrapCanvasOverflowLine(ctx, lines, words, i, maxWidth, maxLines);
+      }
+    }
+  }
+  if (line) lines.push(line);
+  return lines.slice(0, maxLines);
+}
+
+function slugifyShareFilename(title) {
+  let s = String(title).toLowerCase().replaceAll(/[^a-z0-9]+/gi, '-');
+  s = s.replace(/^-+/, '').replace(/-+$/, '');
+  return s.slice(0, 48) || 'pick';
+}
+
+function appendUrlCacheBust(url, version) {
+  if (version == null || version === '') return url;
+  const sep = url.includes('?') ? '&' : '?';
+  return url + sep + 'v=' + encodeURIComponent(String(version));
+}
+
+/** Resolve relative paths against the page URL (needed for fetch). */
+function resolveMediaUrl(pathOrUrl) {
+  if (!pathOrUrl) return '';
+  if (/^https?:\/\//i.test(pathOrUrl)) return pathOrUrl;
+  if (pathOrUrl.startsWith('/')) return globalThis.location.origin + pathOrUrl;
+  return new URL(pathOrUrl, globalThis.location.href).href;
+}
+
+function roundRectPath(ctx, x, y, w, h, r) {
+  const rr = Math.min(r, w / 2, h / 2);
+  ctx.beginPath();
+  ctx.moveTo(x + rr, y);
+  ctx.arcTo(x + w, y, x + w, y + h, rr);
+  ctx.arcTo(x + w, y + h, x, y + h, rr);
+  ctx.arcTo(x, y + h, x, y, rr);
+  ctx.arcTo(x, y, x + w, y, rr);
+  ctx.closePath();
+}
+
 function detectBackground(skinId) {
   const base = 'skins/' + skinId + '/background';
   return new Promise((resolve) => {
@@ -163,6 +260,9 @@ export class HBOStageReveal {
     height: '100%',
     onReveal: null,
     onWatch: null,
+    onShare: null,
+    showAmbientToggle: true,
+    showShareButton: true,
   };
 
   constructor(container, config = {}) {
@@ -188,6 +288,19 @@ export class HBOStageReveal {
     this.scatterAnimFrame = null;
     this.recentIds = [];
     this.abortController = new AbortController();
+
+    this.ambientSkinAudio = null;
+    this.ambientThemeAudio = null;
+    this.skinAmbientVolume = 0.2;
+    this.themeAmbientVolume = 0.16;
+    this.audioUnlocked = false;
+    this.ambientVideoPaused = false;
+    this.ambientUserMuted = globalThis.localStorage?.getItem('hbo_stage_ambient_muted') === '1';
+
+    this.currentShow = null;
+    this.currentSkinManifest = null;
+    this.ambientSkinBlobUrl = null;
+    this.ambientThemeBlobUrl = null;
 
     this._render();
     this.root = this.container.querySelector('.hbo-stage');
@@ -223,6 +336,9 @@ export class HBOStageReveal {
           <option value="default">Stage Spotlight</option>
         </select>
       </div>` : ''}
+
+      ${c.showAmbientToggle === false ? '' : `
+      <button type="button" class="hbo-ambient-toggle" aria-label="Ambient sound" title="Ambient sound"></button>`}
 
       <div class="skin-bg"></div>
       <div class="skin-scatter"></div>
@@ -294,6 +410,8 @@ export class HBOStageReveal {
           <div class="reveal-actions">
             <button class="btn btn-primary btn-watch">Watch Now</button>
             <button class="btn btn-secondary btn-another">Try Another</button>
+            ${c.showShareButton === false ? '' : `
+            <button type="button" class="btn btn-secondary btn-share">Share</button>`}
           </div>
         </div>
       </section>
@@ -309,15 +427,37 @@ export class HBOStageReveal {
     this.$('.btn-another').addEventListener('click', () => this._tryAnother(), sig);
     this.$('.btn-watch').addEventListener('click', () => this._goHome(), sig);
 
+    const shareBtn = this.$('.btn-share');
+    if (shareBtn) {
+      shareBtn.addEventListener('click', () => this._shareCanvasCard(), sig);
+    }
+
     const genreSelect = this.$('.genre-select');
     if (genreSelect) {
-      genreSelect.addEventListener('change', (e) => this._onGenreChange(e), sig);
+      genreSelect.addEventListener('change', (e) => {
+        this._unlockAmbientAudio();
+        this._onGenreChange(e);
+      }, sig);
     }
 
     const skinSelect = this.$('.skin-select');
     if (skinSelect) {
-      skinSelect.addEventListener('change', (e) => this._switchSkin(e.target.value), sig);
+      skinSelect.addEventListener('change', (e) => {
+        this._unlockAmbientAudio();
+        this._switchSkin(e.target.value);
+      }, sig);
     }
+
+    const ambBtn = this.$('.hbo-ambient-toggle');
+    if (ambBtn) {
+      ambBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        this._toggleAmbientMute();
+      }, sig);
+      this._updateAmbientToggleUi();
+    }
+
+    this.root.addEventListener('pointerdown', () => this._unlockAmbientAudio(), { once: true, signal: this.abortController.signal });
   }
 
   // ─── Init ──────────────────────────────────────────
@@ -332,6 +472,8 @@ export class HBOStageReveal {
         defaults: { country: 'us', lang: 'en', brands: [], franchises: [], contentType: 'BOTH', limit: 50 },
         activeSkin: 'default',
         availableSkins: ['default'],
+        themeAmbient: {},
+        themeAmbientVolume: 0.16,
       };
     }
 
@@ -425,8 +567,9 @@ export class HBOStageReveal {
   // ─── Skin Engine ───────────────────────────────────
 
   async _loadSkin(skinId) {
-    const res = await fetch('skins/' + skinId + '/skin.json');
+    const res = await fetch('skins/' + skinId + '/skin.json', { cache: 'no-store' });
     const manifest = await res.json();
+    this.currentSkinManifest = manifest;
     this.currentSkinId = skinId;
 
     if (this.skinLinkEl) { this.skinLinkEl.remove(); this.skinLinkEl = null; }
@@ -458,6 +601,8 @@ export class HBOStageReveal {
     await this._loadSkinFont(manifest);
     this._applySkinText(manifest);
     this._spawnScatterLogos(skinId, manifest);
+    await this._setupSkinAmbient(manifest, skinId);
+    await this._syncThemeAmbient();
   }
 
   async _loadSkinFont(manifest) {
@@ -583,7 +728,7 @@ export class HBOStageReveal {
     select.innerHTML = '';
     const labels = await Promise.all(skins.map(async (skinId) => {
       try {
-        const res = await fetch('skins/' + skinId + '/skin.json');
+        const res = await fetch('skins/' + skinId + '/skin.json', { cache: 'no-store' });
         const data = await res.json();
         return { id: skinId, name: data.name || skinId };
       } catch { return { id: skinId, name: skinId }; }
@@ -609,14 +754,166 @@ export class HBOStageReveal {
 
   // ─── Theme (Genre) ────────────────────────────────
 
-  _applyTheme(genreValues) {
+  async _applyTheme(genreValues) {
     if (!genreValues || genreValues.length === 0) {
       delete this.root.dataset.theme;
+      await this._syncThemeAmbient();
       return;
     }
-    const slug = GENRE_THEMES[genreValues[0]];
-    if (slug) { this.root.dataset.theme = slug; }
-    else { delete this.root.dataset.theme; }
+    const key = genreValues[0];
+    const slug = GENRE_THEMES[key];
+    if (slug) {
+      this.root.dataset.theme = slug;
+    } else {
+      delete this.root.dataset.theme;
+    }
+    await this._syncThemeAmbient();
+  }
+
+  // ─── Ambient audio (per skin + optional genre layer) ─
+
+  _unlockAmbientAudio() {
+    if (this.audioUnlocked) return;
+    this.audioUnlocked = true;
+    this._refreshAmbientPlayback();
+  }
+
+  _setAmbientVideoPaused(on) {
+    this.ambientVideoPaused = on;
+    this._refreshAmbientPlayback();
+  }
+
+  _toggleAmbientMute() {
+    this.ambientUserMuted = !this.ambientUserMuted;
+    try {
+      globalThis.localStorage?.setItem('hbo_stage_ambient_muted', this.ambientUserMuted ? '1' : '0');
+    } catch { /* ignore */ }
+    this._updateAmbientToggleUi();
+    this._refreshAmbientPlayback();
+  }
+
+  _updateAmbientToggleUi() {
+    const btn = this.$('.hbo-ambient-toggle');
+    if (!btn) return;
+    btn.classList.toggle('is-muted', this.ambientUserMuted);
+    btn.setAttribute('aria-label', this.ambientUserMuted ? 'Unmute ambient sound' : 'Mute ambient sound');
+    btn.setAttribute('title', this.ambientUserMuted ? 'Unmute ambient sound' : 'Mute ambient sound');
+  }
+
+  _refreshAmbientPlayback() {
+    if (this.destroyed) return;
+    const shouldPlay = this.audioUnlocked && !this.ambientUserMuted && !this.ambientVideoPaused;
+
+    const apply = (el, baseVol) => {
+      if (!el) return;
+      if (!shouldPlay) {
+        el.pause();
+        el.volume = 0;
+        return;
+      }
+      el.volume = Math.min(1, Math.max(0, baseVol));
+      el.play().catch(() => {});
+    };
+
+    apply(this.ambientSkinAudio, this.skinAmbientVolume);
+    apply(this.ambientThemeAudio, this.themeAmbientVolume);
+  }
+
+  _disposeSkinAmbientOnly() {
+    if (this.ambientSkinAudio) {
+      this.ambientSkinAudio.pause();
+      this.ambientSkinAudio.removeAttribute('src');
+      this.ambientSkinAudio.load();
+      this.ambientSkinAudio = null;
+    }
+    if (this.ambientSkinBlobUrl) {
+      URL.revokeObjectURL(this.ambientSkinBlobUrl);
+      this.ambientSkinBlobUrl = null;
+    }
+  }
+
+  _disposeThemeAmbientOnly() {
+    if (this.ambientThemeAudio) {
+      this.ambientThemeAudio.pause();
+      this.ambientThemeAudio.removeAttribute('src');
+      this.ambientThemeAudio.load();
+      this.ambientThemeAudio = null;
+    }
+    if (this.ambientThemeBlobUrl) {
+      URL.revokeObjectURL(this.ambientThemeBlobUrl);
+      this.ambientThemeBlobUrl = null;
+    }
+  }
+
+  _disposeAmbientAudio() {
+    this._disposeSkinAmbientOnly();
+    this._disposeThemeAmbientOnly();
+  }
+
+  async _setupSkinAmbient(manifest, skinId) {
+    this._disposeSkinAmbientOnly();
+    if (!manifest.ambientAudio) return;
+
+    let src = manifest.ambientAudio;
+    if (!src.startsWith('http') && !src.startsWith('/')) {
+      src = 'skins/' + skinId + '/' + src;
+    }
+    src = appendUrlCacheBust(src, manifest.ambientVersion);
+    const resolved = resolveMediaUrl(src);
+
+    this.skinAmbientVolume = typeof manifest.ambientVolume === 'number' ? manifest.ambientVolume : 0.2;
+
+    try {
+      const res = await fetch(resolved, { cache: 'no-store' });
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      const blob = await res.blob();
+      this.ambientSkinBlobUrl = URL.createObjectURL(blob);
+      const audio = new Audio(this.ambientSkinBlobUrl);
+      audio.loop = true;
+      audio.preload = 'auto';
+      this.ambientSkinAudio = audio;
+      audio.addEventListener('error', () => { /* ignore */ });
+    } catch (e) {
+      console.warn('Ambient fetch failed, using direct URL:', e);
+      const audio = new Audio(resolved);
+      audio.loop = true;
+      audio.preload = 'auto';
+      this.ambientSkinAudio = audio;
+      audio.addEventListener('error', () => { /* ignore */ });
+    } finally {
+      this._refreshAmbientPlayback();
+    }
+  }
+
+  async _syncThemeAmbient() {
+    this._disposeThemeAmbientOnly();
+    const theme = this.root.dataset.theme;
+    const map = this.appConfig?.themeAmbient;
+    if (!theme || !map || typeof map !== 'object') return;
+
+    const pathOrUrl = map[theme];
+    if (!pathOrUrl || typeof pathOrUrl !== 'string') return;
+
+    this.themeAmbientVolume = typeof this.appConfig.themeAmbientVolume === 'number'
+      ? this.appConfig.themeAmbientVolume
+      : 0.16;
+
+    const resolved = resolveMediaUrl(pathOrUrl);
+    try {
+      const res = await fetch(resolved, { cache: 'no-store' });
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      const blob = await res.blob();
+      this.ambientThemeBlobUrl = URL.createObjectURL(blob);
+      const audio = new Audio(this.ambientThemeBlobUrl);
+      audio.loop = true;
+      audio.preload = 'auto';
+      this.ambientThemeAudio = audio;
+      audio.addEventListener('error', () => { /* ignore */ });
+    } catch (e) {
+      console.warn('Theme ambient fetch failed:', e);
+    } finally {
+      this._refreshAmbientPlayback();
+    }
   }
 
   // ─── Data Loading ──────────────────────────────────
@@ -802,6 +1099,7 @@ export class HBOStageReveal {
 
     title.textContent = show.title;
     desc.textContent = show.description;
+    this.currentShow = show;
   }
 
   // ─── Animation Sequences ──────────────────────────
@@ -863,8 +1161,11 @@ export class HBOStageReveal {
     if (this.isAnimating) return;
     this.isAnimating = true;
 
+    this.currentShow = null;
+    this._unlockAmbientAudio();
     this._resetRevealElements();
     this._switchFrame(this.$('.frame-idle'), this.$('.frame-credits'));
+    this._setAmbientVideoPaused(true);
     await wait(100);
 
     if (this.player && typeof this.player.playVideo === 'function') {
@@ -876,6 +1177,7 @@ export class HBOStageReveal {
 
   async _afterVideoEnds() {
     this._setIframeVisible(false);
+    this._setAmbientVideoPaused(false);
 
     const frameCredits = this.$('.frame-credits');
     const frameTransition = this.$('.frame-transition');
@@ -956,6 +1258,8 @@ export class HBOStageReveal {
   }
 
   _goHome() {
+    this._unlockAmbientAudio();
+    this._setAmbientVideoPaused(false);
     this._resetRevealElements();
     this._switchFrame(this.$('.frame-reveal'), this.$('.frame-idle'));
 
@@ -1008,7 +1312,7 @@ export class HBOStageReveal {
     themeOverlay.classList.add('fire');
 
     await wait(200);
-    this._applyTheme(this.selectedGenre);
+    await this._applyTheme(this.selectedGenre);
 
     flash.classList.remove('fire');
     forceReflow(flash);
@@ -1034,6 +1338,149 @@ export class HBOStageReveal {
     this.isAnimating = false;
   }
 
+  async _buildShareCanvas() {
+    const W = 1200;
+    const H = 630;
+    const show = this.currentShow;
+    if (!show) return null;
+
+    const canvas = document.createElement('canvas');
+    canvas.width = W;
+    canvas.height = H;
+    const ctx = canvas.getContext('2d');
+    const styles = getComputedStyle(this.root);
+    const accent = (styles.getPropertyValue('--accent') || '#5A31F4').trim();
+    const accentRgb = (styles.getPropertyValue('--accent-rgb') || '90, 49, 244').trim();
+
+    const bg = ctx.createLinearGradient(0, 0, W, H);
+    bg.addColorStop(0, '#12121a');
+    bg.addColorStop(1, '#06060c');
+    ctx.fillStyle = bg;
+    ctx.fillRect(0, 0, W, H);
+
+    ctx.fillStyle = accent;
+    ctx.fillRect(0, 0, 12, H);
+
+    const pad = 56;
+    const posterW = 360;
+    const posterH = 540;
+    const posterX = pad;
+    const posterY = pad;
+
+    const img = await loadImageForShareCard(show.image);
+    if (img) {
+      ctx.save();
+      roundRectPath(ctx, posterX, posterY, posterW, posterH, 14);
+      ctx.clip();
+      const iw = img.naturalWidth;
+      const ih = img.naturalHeight;
+      const scale = Math.max(posterW / iw, posterH / ih);
+      const dw = iw * scale;
+      const dh = ih * scale;
+      const dx = posterX + (posterW - dw) / 2;
+      const dy = posterY + (posterH - dh) / 2;
+      ctx.drawImage(img, dx, dy, dw, dh);
+      ctx.restore();
+      ctx.strokeStyle = 'rgba(255,255,255,0.2)';
+      ctx.lineWidth = 2;
+      roundRectPath(ctx, posterX, posterY, posterW, posterH, 14);
+      ctx.stroke();
+    } else {
+      const pg = ctx.createLinearGradient(posterX, posterY, posterX + posterW, posterY + posterH);
+      pg.addColorStop(0, `rgba(${accentRgb}, 0.45)`);
+      pg.addColorStop(1, '#1a1a2e');
+      ctx.fillStyle = pg;
+      roundRectPath(ctx, posterX, posterY, posterW, posterH, 14);
+      ctx.fill();
+    }
+
+    const textX = posterX + posterW + 48;
+    const textW = W - textX - pad;
+    const skinLabel = this.currentSkinManifest?.name || this.currentSkinId || 'HBO';
+
+    ctx.fillStyle = 'rgba(255,255,255,0.5)';
+    ctx.font = '600 13px system-ui, -apple-system, BlinkMacSystemFont, sans-serif';
+    ctx.fillText(String(skinLabel).toUpperCase(), textX, 108);
+
+    ctx.fillStyle = '#ffffff';
+    ctx.font = '700 40px system-ui, -apple-system, BlinkMacSystemFont, sans-serif';
+    const titleLines = wrapCanvasLines(ctx, show.title, textW, 3);
+    let ty = 168;
+    for (const tl of titleLines) {
+      ctx.fillText(tl, textX, ty);
+      ty += 50;
+    }
+
+    const meta = [show.year, show.genre].filter(Boolean).join(' · ');
+    if (meta) {
+      ctx.fillStyle = 'rgba(255,255,255,0.45)';
+      ctx.font = '400 17px system-ui, -apple-system, BlinkMacSystemFont, sans-serif';
+      ctx.fillText(meta, textX, ty + 8);
+      ty += 36;
+    }
+
+    ctx.fillStyle = '#b3b3b3';
+    ctx.font = '400 20px system-ui, -apple-system, BlinkMacSystemFont, sans-serif';
+    const descLines = wrapCanvasLines(ctx, show.description || '', textW, 5);
+    ty += 24;
+    for (const dl of descLines) {
+      ctx.fillText(dl, textX, ty);
+      ty += 28;
+    }
+
+    ctx.fillStyle = 'rgba(255,255,255,0.4)';
+    ctx.font = '600 20px system-ui, -apple-system, BlinkMacSystemFont, sans-serif';
+    ctx.fillText('HBO', textX, H - 52);
+
+    return canvas;
+  }
+
+  async _shareCanvasCard() {
+    if (this.isAnimating || !this.currentShow) return;
+    const btn = this.$('.btn-share');
+    if (btn) btn.disabled = true;
+    try {
+      const canvas = await this._buildShareCanvas();
+      if (!canvas) return;
+
+      const blob = await new Promise((resolve, reject) => {
+        canvas.toBlob((b) => (b ? resolve(b) : reject(new Error('Could not export image'))), 'image/png', 0.92);
+      });
+
+      const fname = `hbo-pick-${slugifyShareFilename(this.currentShow.title)}.png`;
+      const file = new File([blob], fname, { type: 'image/png' });
+
+      if (navigator.canShare?.({ files: [file] })) {
+        try {
+          await navigator.share({
+            files: [file],
+            title: this.currentShow.title,
+            text: (this.currentShow.description || '').slice(0, 240),
+          });
+          if (this.config.onShare) this.config.onShare({ kind: 'share', filename: fname });
+          return;
+        } catch (e) {
+          if (e.name === 'AbortError') return;
+        }
+      }
+
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = fname;
+      a.rel = 'noopener';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 2000);
+      if (this.config.onShare) this.config.onShare({ kind: 'download', filename: fname });
+    } catch (e) {
+      console.warn('Share card failed:', e);
+    } finally {
+      if (btn) btn.disabled = false;
+    }
+  }
+
   // ─── Public API ────────────────────────────────────
 
   setSkin(skinId) {
@@ -1042,9 +1489,15 @@ export class HBOStageReveal {
     if (select) select.value = skinId;
   }
 
+  /** Generates and shares or downloads a 1200×630 PNG card for the current recommendation. */
+  shareCard() {
+    return this._shareCanvasCard();
+  }
+
   destroy() {
     this.destroyed = true;
     this.abortController.abort();
+    this._disposeAmbientAudio();
     if (this.scatterAnimFrame) cancelAnimationFrame(this.scatterAnimFrame);
     if (this.player && typeof this.player.destroy === 'function') this.player.destroy();
     if (this.skinLinkEl) this.skinLinkEl.remove();

@@ -1,6 +1,20 @@
 {
   "activeSkin": "default",
   "availableSkins": ["default", "batman", "harry-potter", "halloween", "game-of-thrones"],
+  "themeAmbientVolume": 0.16,
+  "themeAmbient": {
+    "comedy": "audio/genres/comedy.wav",
+    "drama": "audio/genres/drama.wav",
+    "action": "audio/genres/action.wav",
+    "sci-fi": "audio/genres/sci-fi.wav",
+    "horror": "audio/genres/horror.wav",
+    "romance": "audio/genres/romance.wav",
+    "thriller": "audio/genres/thriller.wav",
+    "documentary": "audio/genres/documentary.wav",
+    "fantasy": "audio/genres/fantasy.wav",
+    "animation": "audio/genres/animation.wav",
+    "crime": "audio/genres/crime.wav"
+  },
   "genres": [
     { "label": "All Genres",      "value": [] },
     { "label": "Comedy",          "value": ["comedy"] },

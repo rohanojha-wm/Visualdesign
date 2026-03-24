@@ -23,13 +23,17 @@
   const $ = (sel) => document.querySelector(sel);
 
   const GENRE_THEMES = {
-    'comedy': 'comedy',
-    'drama': 'drama',
-    'action': 'action',
-    'horror': 'horror',
-    'thriller': 'thrillers',
-    'documentary': 'documentaries',
-    'crime': 'crime',
+    comedy: 'comedy',
+    drama: 'drama',
+    action: 'action',
+    'sci-fi': 'sci-fi',
+    horror: 'horror',
+    romance: 'romance',
+    thriller: 'thriller',
+    documentary: 'documentary',
+    fantasy: 'fantasy',
+    animation: 'animation',
+    crime: 'crime',
   };
 
   function applyTheme(genreValues) {
@@ -65,7 +69,7 @@
   }
 
   async function loadSkin(skinId) {
-    const manifestRes = await fetch('skins/' + skinId + '/skin.json');
+    const manifestRes = await fetch('skins/' + skinId + '/skin.json', { cache: 'no-store' });
     const manifest = await manifestRes.json();
     currentSkinManifest = manifest;
     currentSkinId = skinId;
@@ -246,7 +250,7 @@
     select.innerHTML = '';
     const labels = await Promise.all(skins.map(async (skinId) => {
       try {
-        const res = await fetch('skins/' + skinId + '/skin.json');
+        const res = await fetch('skins/' + skinId + '/skin.json', { cache: 'no-store' });
         const data = await res.json();
         return { id: skinId, name: data.name || skinId };
       } catch {

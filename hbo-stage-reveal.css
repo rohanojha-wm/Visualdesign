@@ -304,6 +304,47 @@
   animation: hbo-fadeIn 0.8s ease 1s forwards;
 }
 
+/* Ambient sound (per-skin + optional genre layer) */
+.hbo-stage .hbo-ambient-toggle {
+  position: absolute;
+  bottom: 20px;
+  left: 20px;
+  z-index: 500;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(0, 0, 0, 0.45);
+  color: rgba(255, 255, 255, 0.85);
+  cursor: pointer;
+  backdrop-filter: blur(10px);
+  transition: background 0.2s ease, border-color 0.2s ease, transform 0.15s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  line-height: 1;
+  padding: 0;
+}
+
+.hbo-stage .hbo-ambient-toggle::before {
+  content: '🔊';
+}
+
+.hbo-stage .hbo-ambient-toggle.is-muted::before {
+  content: '🔇';
+}
+
+.hbo-stage .hbo-ambient-toggle:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.35);
+  transform: scale(1.05);
+}
+
+.hbo-stage .hbo-ambient-toggle:active {
+  transform: scale(0.97);
+}
+
 @keyframes hbo-fadeIn {
   to { opacity: 1; }
 }
@@ -891,7 +932,9 @@
 .hbo-stage .reveal-actions {
   margin-top: 24px;
   display: flex;
+  flex-wrap: wrap;
   gap: 12px;
+  justify-content: center;
   opacity: 0;
   transform: translateY(12px);
 }
@@ -1336,6 +1379,14 @@
   .hbo-stage .skin-picker-corner {
     top: 12px;
     right: 12px;
+  }
+
+  .hbo-stage .hbo-ambient-toggle {
+    bottom: 12px;
+    left: 12px;
+    width: 40px;
+    height: 40px;
+    font-size: 16px;
   }
 
   .hbo-stage .skin-select {

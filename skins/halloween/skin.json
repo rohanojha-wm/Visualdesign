@@ -14,5 +14,7 @@
   "introVideoId": "O08PQRA6MLo",
   "particleColor": "255, 140, 20",
   "scatterFiles": ["scatter/icon-1.svg", "scatter/icon-2.svg", "scatter/icon-3.svg"],
-  "scatterCount": 85
+  "scatterCount": 85,
+  "ambientAudio": "ambient.wav",
+  "ambientVolume": 0.2
 }
