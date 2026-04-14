@@ -26,7 +26,7 @@
   --font: 'Inter', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif;
   --font-display: 'Inter', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif;
 
-  --card-width: 300px;
+  --card-width: min(520px, 85vw);
   --card-radius: 8px;
   --btn-height: 44px;
   --btn-radius: 22px;
@@ -798,7 +798,7 @@ html, body {
 /* Content Card */
 .content-card {
   width: var(--card-width);
-  aspect-ratio: 2 / 3;
+  aspect-ratio: 16 / 9;
   border-radius: var(--card-radius);
   overflow: hidden;
   position: relative;
@@ -836,12 +836,36 @@ html, body {
   justify-content: center;
   position: relative;
   overflow: hidden;
+  background-color: #0a0a12;
+}
+
+.card-poster-img {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center center;
+  opacity: 0;
+  transition: opacity 0.35s ease;
+  pointer-events: none;
+}
+
+.card-poster-img.is-visible {
+  opacity: 1;
+}
+
+.card-placeholder.has-poster .card-placeholder-icon {
+  display: none;
 }
 
 .card-placeholder::after {
   content: '';
   position: absolute;
   inset: 0;
+  z-index: 2;
+  pointer-events: none;
   background: linear-gradient(180deg, transparent 60%, rgba(0,0,0,0.6) 100%);
 }
 
@@ -1307,7 +1331,7 @@ html, body {
 
 @media (max-width: 600px) {
   :root {
-    --card-width: 220px;
+    --card-width: min(360px, 92vw);
   }
 
   .idle-title {

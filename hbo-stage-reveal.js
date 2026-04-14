@@ -13,45 +13,40 @@ const GENRE_THEMES = {
   crime: 'crime',
 };
 
+/**
+ * Mirrors VIBE_MAPPINGS from dotcom-graphql/source/schemas/constants/vibeMappings.ts.
+ * id   → passed as vibeTags[] to GQL
+ * genres → used for client-side _filterByGenre + _applyTheme
+ */
+const VIBE_OPTIONS = [
+  { id: null,              label: 'All Vibes',       genres: [] },
+  { id: 'edge-of-my-seat', label: 'Edge of My Seat', genres: ['action', 'thriller', 'horror', 'crime'] },
+  { id: 'cerebral',        label: 'Cerebral',        genres: ['documentary', 'drama', 'sci-fi', 'mystery'] },
+  { id: 'feel-good',       label: 'Feel Good',       genres: ['comedy', 'romance', 'animation', 'family'] },
+  { id: 'epic-adventure',  label: 'Epic Adventure',  genres: ['fantasy', 'adventure', 'action', 'sci-fi'] },
+  { id: 'binge-worthy',    label: 'Binge-Worthy',    genres: ['drama', 'thriller', 'crime', 'mystery'] },
+];
+
 const BG_EXTENSIONS = ['.avif', '.webp', '.jpg', '.png'];
 const CATALOG_CACHE_TTL = 30 * 60 * 1000;
+/** Items per getDiscoveryExperience call; next calls pass cumulative excludeIds. */
+const HERO_POOL_LIMIT = 10;
+/** Abort hung GraphQL requests; normal responses should finish well under this. */
+const GQL_FETCH_TIMEOUT_MS = 25000;
 
-const WHAT_SHOULD_I_WATCH = `
-  query WhatShouldIWatch(
-    $country: String!
-    $lang: String!
-    $genres: [String]
-    $brands: [String]
-    $franchises: [String]
-    $contentType: QuizContentType
-    $limit: Int
-  ) {
-    whatShouldIWatch(
-      country: $country
-      lang: $lang
-      genres: $genres
-      brands: $brands
-      franchises: $franchises
-      contentType: $contentType
-      limit: $limit
-    ) {
-      items {
-        ... on Series {
-          hbomaxId releaseYear
-          trailer { programId editId title url }
-          images genresFormatted
-          title { short full }
-          summary { short full }
-          imageUrlLink localizedRating
-        }
-        ... on Feature {
-          hbomaxId releaseYear
-          trailer { programId editId title url }
-          images
-          title { short full }
-          summary { short full }
-          imageUrlLink genresFormatted localizedRating
-        }
+const GET_DISCOVERY_EXPERIENCE = `
+  query GetDiscoveryExperience($input: DiscoveryInput!) {
+    getDiscoveryExperience(input: $input) {
+      heroContentPool {
+        hbomaxId
+        releaseYear
+        imageUrlLink
+        images
+        primaryGenre
+        secondaryGenre
+        matchReason
+        title { short full }
+        summary { short full }
       }
     }
   }
@@ -119,16 +114,24 @@ function pickFrom(images, ...keys) {
 }
 
 function normalize(item) {
-  const imgs = item.images;
+  // imageUrlLink from GQL is the content *page* path (slug URL), not a poster — use localized images map.
+  const poster = pickFrom(
+    item.images,
+    'cover-artwork-horizontal',
+    'cover-artwork-square',
+    'poster-with-logo',
+    '1280_v2',
+    'default',
+  );
   return {
-    id: item.hbomaxId,
-    title: (item.title && (item.title.full || item.title.short)) || 'Untitled',
-    description: (item.summary && (item.summary.short || item.summary.full)) || '',
-    image: pickFrom(imgs, 'poster-with-logo', 'cover-artwork', 'default', 'cover-artwork-square'),
-    year: item.releaseYear || '',
-    genre: item.genresFormatted || '',
-    rating: item.localizedRating || '',
-    trailerUrl: item.trailer?.url || null,
+    id:          item.hbomaxId,
+    title:       (item.title && (item.title.full || item.title.short)) || 'Untitled',
+    description: (item.summary && (item.summary.short || item.summary.full)) || item.matchReason || '',
+    image:       poster || null,
+    year:        item.releaseYear || '',
+    genre:       [item.primaryGenre, item.secondaryGenre].filter(Boolean).join(', '),
+    rating:      '',
+    trailerUrl:  null,
   };
 }
 
@@ -277,6 +280,8 @@ export class HBOStageReveal {
     this.allItems = [];
     this.currentShowId = null;
     this.selectedGenre = [];
+    /** Currently selected VIBE_OPTIONS entry (null = All Vibes). */
+    this.selectedVibe = VIBE_OPTIONS[0];
     this.isAnimating = false;
     this.player = null;
     this.pendingPlay = false;
@@ -287,6 +292,8 @@ export class HBOStageReveal {
     this.skinFontLinkEl = null;
     this.scatterAnimFrame = null;
     this.recentIds = [];
+    /** Cumulative content ids from GQL — sent as excludeIds on the next hero fetch. */
+    this.apiExcludedIds = [];
     this.abortController = new AbortController();
 
     this.ambientSkinAudio = null;
@@ -390,6 +397,7 @@ export class HBOStageReveal {
           <div class="content-card">
             <div class="card-image">
               <div class="card-placeholder">
+                <img class="card-poster-img" alt="" decoding="async" loading="eager" />
                 <div class="card-placeholder-icon"></div>
               </div>
             </div>
@@ -464,37 +472,42 @@ export class HBOStageReveal {
 
   async _init() {
     try {
-      const res = await fetch('config.json');
-      this.appConfig = await res.json();
-    } catch {
-      this.appConfig = {
-        genres: [{ label: 'All Genres', value: [] }],
-        defaults: { country: 'us', lang: 'en', brands: [], franchises: [], contentType: 'BOTH', limit: 50 },
-        activeSkin: 'default',
-        availableSkins: ['default'],
-        themeAmbient: {},
-        themeAmbientVolume: 0.16,
-      };
+      try {
+        const res = await fetch('config.json');
+        this.appConfig = await res.json();
+      } catch {
+        this.appConfig = {
+          defaults: { country: 'us', lang: 'en' },
+          activeSkin: 'default',
+          availableSkins: ['default'],
+          themeAmbient: {},
+          themeAmbientVolume: 0.16,
+        };
+      }
+
+      const skinId = this.config.skin || this.appConfig.activeSkin || 'default';
+      const skins = this.config.availableSkins || this.appConfig.availableSkins || ['default'];
+
+      this._populateGenreDropdown(VIBE_OPTIONS);
+      this.selectedVibe = VIBE_OPTIONS[0];
+      this.selectedGenre = VIBE_OPTIONS[0].genres;
+
+      this.catalogPromise = this._loadCatalog();
+
+      if (this.config.showSkinPicker) {
+        await this._populateSkinDropdown(skins);
+      }
+      await this._loadSkin(skinId);
+
+      const skinSelect = this.$('.skin-select');
+      if (skinSelect) skinSelect.value = skinId;
+
+      this._initPlayer();
+    } catch (e) {
+      console.warn('Stage init failed:', e);
+    } finally {
+      this._dismissLoadingOverlay();
     }
-
-    const skinId = this.config.skin || this.appConfig.activeSkin || 'default';
-    const skins = this.config.availableSkins || this.appConfig.availableSkins || ['default'];
-
-    this._populateGenreDropdown(this.appConfig.genres);
-    this.selectedGenre = this.appConfig.genres[0].value;
-
-    this.catalogPromise = this._loadCatalog();
-
-    if (this.config.showSkinPicker) {
-      await this._populateSkinDropdown(skins);
-    }
-    await this._loadSkin(skinId);
-
-    const skinSelect = this.$('.skin-select');
-    if (skinSelect) skinSelect.value = skinId;
-
-    this._dismissLoadingOverlay();
-    this._initPlayer();
   }
 
   // ─── YouTube Player ────────────────────────────────
@@ -919,18 +932,103 @@ export class HBOStageReveal {
   // ─── Data Loading ──────────────────────────────────
 
   async _gql(query, variables = {}) {
-    const res = await fetch(this.config.graphqlEndpoint, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ query, variables }),
-    });
+    const ac = new AbortController();
+    const timeoutId = setTimeout(() => ac.abort(), GQL_FETCH_TIMEOUT_MS);
+    let res;
+    try {
+      res = await fetch(this.config.graphqlEndpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query, variables }),
+        signal: ac.signal,
+      });
+    } finally {
+      clearTimeout(timeoutId);
+    }
     const json = await res.json();
-    if (json.errors) console.error('GraphQL errors:', json.errors);
+    if (!res.ok) {
+      throw new Error(`GraphQL HTTP ${res.status}: ${json?.errors?.[0]?.message || res.statusText}`);
+    }
+    if (json.errors?.length) {
+      const msg = json.errors.map((e) => e.message).join('; ');
+      console.error('GraphQL errors:', json.errors);
+      throw new Error(msg);
+    }
     return json.data;
   }
 
+  /** Matches dotcom-graphql `DiscoveryInput` (country required). */
+  _discoveryGqlInput() {
+    const d = this.appConfig?.defaults || {};
+    const themeId = this.config.skin || this.appConfig?.activeSkin || 'default';
+    const vibeTags = this.selectedVibe?.id ? [this.selectedVibe.id] : [];
+    return {
+      country: String(d.country || 'us').toLowerCase(),
+      lang: d.lang || 'en',
+      tenant: 'max',
+      themeId,
+      vibeTags,
+      excludeIds: [...this.apiExcludedIds],
+      limit: HERO_POOL_LIMIT,
+    };
+  }
+
   _getCacheKey() {
-    return 'hbo_catalog_' + this.id;
+    // v5: includes vibe so each vibe selection has its own cache entry
+    const vibeKey = this.selectedVibe?.id ?? 'all';
+    return `hbo_catalog_v5_${this.id}_${vibeKey}`;
+  }
+
+  _clearCachedCatalog() {
+    try { localStorage.removeItem(this._getCacheKey()); } catch { /* ignore */ }
+  }
+
+  _isMockCatalog() {
+    return (
+      this.fullCatalog.length > 0 &&
+      String(this.fullCatalog[0].id || '').startsWith('mock-')
+    );
+  }
+
+  _syncExcludedIdsFromCatalog() {
+    if (this._isMockCatalog()) {
+      this.apiExcludedIds = [];
+      return;
+    }
+    this.apiExcludedIds = this.fullCatalog.map((s) => s.id).filter(Boolean);
+  }
+
+  async _fetchMoreHeroesFromApi() {
+    if (this._isMockCatalog()) return;
+    try {
+      const data = await this._gql(GET_DISCOVERY_EXPERIENCE, {
+        input: this._discoveryGqlInput(),
+      });
+      const pool = data?.getDiscoveryExperience?.heroContentPool;
+      if (!Array.isArray(pool) || pool.length === 0) return;
+      const batch = pool.map(normalize);
+      const seen = new Set(this.fullCatalog.map((s) => s.id));
+      for (const item of batch) {
+        if (item.id && !seen.has(item.id)) {
+          this.fullCatalog.push(item);
+          seen.add(item.id);
+        }
+      }
+      this._syncExcludedIdsFromCatalog();
+      this._setCachedCatalog(this.fullCatalog);
+      this._filterByGenre();
+    } catch (e) {
+      console.warn('Additional hero batch failed:', e.message);
+    }
+  }
+
+  async _maybeRefillHeroPool() {
+    if (!this.fullCatalog.length || this._isMockCatalog()) return;
+    let unseen = this.allItems.filter((s) => !this.recentIds.includes(s.id));
+    if (unseen.length > 0) return;
+    await this._fetchMoreHeroesFromApi();
+    unseen = this.allItems.filter((s) => !this.recentIds.includes(s.id));
+    if (unseen.length === 0) this.recentIds.length = 0;
   }
 
   _getCachedCatalog() {
@@ -956,28 +1054,30 @@ export class HBOStageReveal {
     const cached = this._getCachedCatalog();
     if (cached && cached.length > 0) {
       this.fullCatalog = cached;
+      this._syncExcludedIdsFromCatalog();
       this._filterByGenre();
       this.catalogReady = true;
       this._refreshCatalogInBackground();
       return this.allItems;
     }
 
-    const d = this.appConfig ? this.appConfig.defaults : {};
+    let gotHeroPool = false;
     try {
-      const data = await this._gql(WHAT_SHOULD_I_WATCH, {
-        country: d.country || 'us', lang: d.lang || 'en', genres: [],
-        brands: d.brands || [], franchises: d.franchises || [],
-        contentType: d.contentType || 'BOTH', limit: d.limit || 50,
+      const data = await this._gql(GET_DISCOVERY_EXPERIENCE, {
+        input: this._discoveryGqlInput(),
       });
-      if (data?.whatShouldIWatch?.items) {
-        this.fullCatalog = data.whatShouldIWatch.items.map(normalize);
+      const pool = data?.getDiscoveryExperience?.heroContentPool;
+      if (Array.isArray(pool)) {
+        this.fullCatalog = pool.map(normalize);
+        this._syncExcludedIdsFromCatalog();
         this._setCachedCatalog(this.fullCatalog);
+        gotHeroPool = true;
       }
     } catch (err) {
       console.warn('GraphQL unreachable, using mock catalog:', err.message);
       this.fullCatalog = MOCK_CATALOG.slice();
     }
-    if (this.fullCatalog.length === 0) {
+    if (!gotHeroPool && this.fullCatalog.length === 0) {
       this.fullCatalog = MOCK_CATALOG.slice();
     }
     this._filterByGenre();
@@ -986,20 +1086,23 @@ export class HBOStageReveal {
   }
 
   async _refreshCatalogInBackground() {
-    const d = this.appConfig ? this.appConfig.defaults : {};
     try {
-      const data = await this._gql(WHAT_SHOULD_I_WATCH, {
-        country: d.country || 'us', lang: d.lang || 'en', genres: [],
-        brands: d.brands || [], franchises: d.franchises || [],
-        contentType: d.contentType || 'BOTH', limit: d.limit || 50,
+      const data = await this._gql(GET_DISCOVERY_EXPERIENCE, {
+        input: this._discoveryGqlInput(),
       });
-      if (data?.whatShouldIWatch?.items) {
-        const fresh = data.whatShouldIWatch.items.map(normalize);
-        if (fresh.length > 0) {
-          this.fullCatalog = fresh;
-          this._setCachedCatalog(this.fullCatalog);
-          this._filterByGenre();
+      const pool = data?.getDiscoveryExperience?.heroContentPool;
+      if (Array.isArray(pool) && pool.length > 0) {
+        const fresh = pool.map(normalize);
+        const seen = new Set(this.fullCatalog.map((s) => s.id));
+        for (const item of fresh) {
+          if (item.id && !seen.has(item.id)) {
+            this.fullCatalog.push(item);
+            seen.add(item.id);
+          }
         }
+        this._syncExcludedIdsFromCatalog();
+        this._setCachedCatalog(this.fullCatalog);
+        this._filterByGenre();
       }
     } catch { /* silent */ }
   }
@@ -1018,7 +1121,8 @@ export class HBOStageReveal {
     if (this.allItems.length === 0) this.allItems = this.fullCatalog.slice();
   }
 
-  _fetchRandomShow() {
+  async _fetchRandomShow() {
+    await this._maybeRefillHeroPool();
     if (!this.allItems.length) return null;
     let pool = this.allItems.filter(s => !this.recentIds.includes(s.id));
     if (pool.length === 0) {
@@ -1035,14 +1139,14 @@ export class HBOStageReveal {
 
   // ─── UI Helpers ────────────────────────────────────
 
-  _populateGenreDropdown(genres) {
+  _populateGenreDropdown(vibeOptions) {
     const select = this.$('.genre-select');
     if (!select) return;
     select.innerHTML = '';
-    genres.forEach((g, i) => {
+    vibeOptions.forEach((v, i) => {
       const opt = document.createElement('option');
       opt.value = i;
-      opt.textContent = g.label;
+      opt.textContent = v.label;
       select.appendChild(opt);
     });
   }
@@ -1082,17 +1186,24 @@ export class HBOStageReveal {
     const desc = this.$('.reveal-description');
     const placeholder = this.$('.card-placeholder');
     const icon = placeholder.querySelector('.card-placeholder-icon');
+    const posterImg = placeholder.querySelector('.card-poster-img');
 
     card.className = 'content-card';
 
-    if (show.image) {
-      placeholder.style.backgroundImage = 'url(' + show.image + ')';
-      placeholder.style.backgroundSize = 'cover';
-      placeholder.style.backgroundPosition = 'center';
-      placeholder.style.backgroundColor = '#1a1a2e';
+    placeholder.style.backgroundImage = '';
+    if (posterImg) {
+      posterImg.classList.remove('is-visible');
+      posterImg.removeAttribute('src');
+    }
+    placeholder.classList.remove('has-poster');
+
+    if (show.image && posterImg) {
+      posterImg.src = show.image;
+      posterImg.classList.add('is-visible');
+      placeholder.classList.add('has-poster');
+      placeholder.style.backgroundColor = '#0a0a12';
       if (icon) icon.style.display = 'none';
     } else {
-      placeholder.style.backgroundImage = '';
       placeholder.style.backgroundColor = '#1a1a2e';
       if (icon) icon.style.display = '';
     }
@@ -1188,12 +1299,26 @@ export class HBOStageReveal {
     this._switchFrame(frameCredits, frameTransition);
     spinner.classList.add('visible');
 
-    if (!this.catalogReady && this.catalogPromise != null) {
+    // Wait for the in-flight catalog load — do not inject mocks while GQL may still succeed
+    // (an earlier 8s race + _ensurePlayableCatalog was picking mock titles before real data arrived).
+    if (this.catalogPromise != null) {
       await this.catalogPromise;
     }
+    if (this.allItems.length === 0 && this.fullCatalog.length > 0) {
+      this._filterByGenre();
+    }
+    if (this.allItems.length === 0 && this.fullCatalog.length === 0) {
+      this.fullCatalog = MOCK_CATALOG.slice();
+      this._filterByGenre();
+      this.catalogReady = this.fullCatalog.length > 0;
+    }
 
-    const show = this._fetchRandomShow();
-    if (!show) { this.isAnimating = false; return; }
+    const show = await this._fetchRandomShow();
+    if (!show) {
+      spinner.classList.remove('visible');
+      this.isAnimating = false;
+      return;
+    }
     this._applyShow(show);
     if (this.config.onReveal) this.config.onReveal(show);
     this._createParticles(this.$('.particles-transition'), 15);
@@ -1237,7 +1362,7 @@ export class HBOStageReveal {
     flash.classList.add('fire');
     await wait(150);
 
-    const show = this._fetchRandomShow();
+    const show = await this._fetchRandomShow();
     if (!show) { this.isAnimating = false; return; }
     this._applyShow(show);
     if (this.config.onReveal) this.config.onReveal(show);
@@ -1283,14 +1408,26 @@ export class HBOStageReveal {
 
   async _onGenreChange(e) {
     const idx = Number.parseInt(e.target.value, 10);
-    const genre = this.appConfig.genres[idx];
-    if (!genre || this.isAnimating) return;
+    const vibe = VIBE_OPTIONS[idx];
+    if (!vibe || this.isAnimating) return;
 
     this.isAnimating = true;
-    this.selectedGenre = genre.value;
+    const prevVibeId = this.selectedVibe?.id ?? null;
+    this.selectedVibe = vibe;
+    this.selectedGenre = vibe.genres;
     this.currentShowId = null;
     this.recentIds.length = 0;
     this._filterByGenre();
+
+    // When vibe changes, wipe the cached pool and fetch a fresh batch from GQL
+    // so excludeIds + vibeTags both reflect the new selection.
+    if (prevVibeId !== vibe.id) {
+      this.fullCatalog = [];
+      this.allItems = [];
+      this.apiExcludedIds = [];
+      this._clearCachedCatalog();
+      this.catalogPromise = this._loadCatalog();
+    }
 
     const card = this.$('.content-card');
     const info = this.$('.reveal-info');
@@ -1314,12 +1451,16 @@ export class HBOStageReveal {
     await wait(200);
     await this._applyTheme(this.selectedGenre);
 
+    // If we just triggered a fresh GQL load, wait for it before picking a show
+    if (this.catalogPromise) await this.catalogPromise;
+    if (this.allItems.length === 0 && this.fullCatalog.length > 0) this._filterByGenre();
+
     flash.classList.remove('fire');
     forceReflow(flash);
     flash.classList.add('fire');
 
     await wait(150);
-    const show = this._fetchRandomShow();
+    const show = await this._fetchRandomShow();
     if (!show) { this.isAnimating = false; return; }
     this._applyShow(show);
     this._createParticles(this.$('.particles-reveal'), 25);

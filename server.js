@@ -13,7 +13,8 @@ app.use((req, res, next) => {
     // Ambient tracks are replaced often; avoid any HTTP caching of bytes.
     res.set('Cache-Control', 'no-store');
   } else if (/\.(css|js)$/i.test(url)) {
-    res.set('Cache-Control', `public, max-age=${ONE_DAY}`);
+    // No-cache during development so JS/CSS changes are always picked up.
+    res.set('Cache-Control', 'no-cache');
   } else if (/\.(svg|png|jpe?g|webp|avif)$/i.test(url)) {
     res.set('Cache-Control', `public, max-age=${ONE_WEEK}`);
   } else if (/\.json$/i.test(url)) {
@@ -29,7 +30,8 @@ app.use((req, res, next) => {
 
 app.use(express.static('.'));
 
-const PORT = 4000;
+// Default 3010 — 3000 is often taken (e.g. Next.js). Override with PORT=...
+const PORT = process.env.PORT ? Number(process.env.PORT) : 3010;
 app.listen(PORT, () => {
   console.log(`Serving at http://localhost:${PORT}`);
 });
