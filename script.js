@@ -69,16 +69,28 @@
   }
 
   async function loadSkin(skinId) {
-    const manifestRes = await fetch('skins/' + skinId + '/skin.json', { cache: 'no-store' });
-    const manifest = await manifestRes.json();
+    let manifest = null;
+    try {
+      const data = await gql(GET_THEME_METADATA, { themeId: skinId });
+      const tm = data?.getThemeMetadata;
+      if (tm) manifest = manifestFromThemeMetadata(tm);
+    } catch (e) {
+      console.warn('getThemeMetadata GQL failed, falling back to skin.json:', e.message);
+    }
+    if (!manifest) {
+      try {
+        const res = await fetch('skins/' + skinId + '/skin.json', { cache: 'no-store' });
+        manifest = await res.json();
+      } catch (e) {
+        console.warn('skin.json fallback also failed:', e.message);
+        manifest = {};
+      }
+    }
+
     currentSkinManifest = manifest;
     currentSkinId = skinId;
 
-    if (skinLinkEl) {
-      skinLinkEl.remove();
-      skinLinkEl = null;
-    }
-
+    if (skinLinkEl) { skinLinkEl.remove(); skinLinkEl = null; }
     const link = document.createElement('link');
     link.rel = 'stylesheet';
     link.href = 'skins/' + skinId + '/skin.css';
@@ -89,7 +101,6 @@
     });
     document.head.appendChild(link);
     skinLinkEl = link;
-
     await cssLoaded;
 
     const bgUrl = await detectBackground(skinId);
@@ -104,7 +115,6 @@
     }
 
     $('#app').dataset.skin = skinId;
-
     await loadSkinFont(manifest);
     applySkinText(manifest);
     spawnScatterLogos(skinId, manifest);
@@ -250,11 +260,17 @@
     select.innerHTML = '';
     const labels = await Promise.all(skins.map(async (skinId) => {
       try {
-        const res = await fetch('skins/' + skinId + '/skin.json', { cache: 'no-store' });
-        const data = await res.json();
-        return { id: skinId, name: data.name || skinId };
+        const data = await gql(GET_THEME_METADATA, { themeId: skinId });
+        const name = data?.getThemeMetadata?.name;
+        return { id: skinId, name: name || skinId };
       } catch {
-        return { id: skinId, name: skinId };
+        try {
+          const res = await fetch('skins/' + skinId + '/skin.json', { cache: 'no-store' });
+          const d = await res.json();
+          return { id: skinId, name: d.name || skinId };
+        } catch {
+          return { id: skinId, name: skinId };
+        }
       }
     }));
     labels.forEach(({ id, name }) => {
@@ -341,6 +357,43 @@
       }
     }
   `;
+
+  const GET_THEME_METADATA = `
+    query GetThemeMetadata($themeId: String!) {
+      getThemeMetadata(themeId: $themeId) {
+        themeId
+        name
+        visualDesignSkinId
+        fontFamily
+        stageCopy
+        particleColor
+        scatterFiles
+        scatterCount
+        ambientAudio
+        ambientVolume
+        ambientVersion
+        introVideoId
+      }
+    }
+  `;
+
+  function manifestFromThemeMetadata(tm) {
+    const copy = tm.stageCopy || {};
+    return {
+      name:           tm.name,
+      fontFamily:     tm.fontFamily || null,
+      moodText:       copy.moodText || null,
+      idle:           copy.idle || {},
+      reveal:         copy.reveal || {},
+      particleColor:  tm.particleColor || null,
+      scatterFiles:   tm.scatterFiles || [],
+      scatterCount:   tm.scatterCount ?? 16,
+      ambientAudio:   tm.ambientAudio || null,
+      ambientVolume:  typeof tm.ambientVolume === 'number' ? tm.ambientVolume : 0.2,
+      ambientVersion: tm.ambientVersion ?? null,
+      introVideoId:   tm.introVideoId || null,
+    };
+  }
 
   // ─── Normalize API response into a flat item ──────
 

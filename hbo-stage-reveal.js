@@ -19,7 +19,6 @@ const GENRE_THEMES = {
  * genres → used for client-side _filterByGenre + _applyTheme
  */
 const VIBE_OPTIONS = [
-  { id: null,              label: 'All Vibes',       genres: [] },
   { id: 'edge-of-my-seat', label: 'Edge of My Seat', genres: ['action', 'thriller', 'horror', 'crime'] },
   { id: 'cerebral',        label: 'Cerebral',        genres: ['documentary', 'drama', 'sci-fi', 'mystery'] },
   { id: 'feel-good',       label: 'Feel Good',       genres: ['comedy', 'romance', 'animation', 'family'] },
@@ -44,13 +43,70 @@ const GET_DISCOVERY_EXPERIENCE = `
         images
         primaryGenre
         secondaryGenre
+        genresFormatted
         matchReason
         title { short full }
         summary { short full }
       }
+      themeMetadata {
+        themeId
+        name
+        visualDesignSkinId
+        fontFamily
+        stageCopy
+        particleColor
+        scatterFiles
+        scatterCount
+        ambientAudio
+        ambientVolume
+        ambientVersion
+        introVideoId
+      }
     }
   }
 `;
+
+const GET_THEME_METADATA = `
+  query GetThemeMetadata($themeId: String!) {
+    getThemeMetadata(themeId: $themeId) {
+      themeId
+      name
+      visualDesignSkinId
+      fontFamily
+      stageCopy
+      particleColor
+      scatterFiles
+      scatterCount
+      ambientAudio
+      ambientVolume
+      ambientVersion
+      introVideoId
+    }
+  }
+`;
+
+/**
+ * Convert a GQL ThemeMetadata response into the manifest shape expected by
+ * _loadSkinFont / _applySkinText / _spawnScatterLogos / _setupSkinAmbient.
+ * Falls back gracefully for any missing fields.
+ */
+function manifestFromThemeMetadata(tm) {
+  const copy = tm.stageCopy || {};
+  return {
+    name:           tm.name,
+    fontFamily:     tm.fontFamily || null,
+    moodText:       copy.moodText || null,
+    idle:           copy.idle || {},
+    reveal:         copy.reveal || {},
+    particleColor:  tm.particleColor || null,
+    scatterFiles:   tm.scatterFiles || [],
+    scatterCount:   tm.scatterCount ?? 16,
+    ambientAudio:   tm.ambientAudio || null,
+    ambientVolume:  typeof tm.ambientVolume === 'number' ? tm.ambientVolume : 0.2,
+    ambientVersion: tm.ambientVersion ?? null,
+    introVideoId:   tm.introVideoId || null,
+  };
+}
 
 const MOCK_CATALOG = [
   { id: 'mock-1', title: 'The Last of Us', description: 'In a post-apocalyptic world, a hardened survivor escorts a teenage girl across a dangerous landscape.', image: null, year: '2023', genre: 'Drama, Action', rating: 'TV-MA', trailerUrl: null },
@@ -129,7 +185,8 @@ function normalize(item) {
     description: (item.summary && (item.summary.short || item.summary.full)) || item.matchReason || '',
     image:       poster || null,
     year:        item.releaseYear || '',
-    genre:       [item.primaryGenre, item.secondaryGenre].filter(Boolean).join(', '),
+    genre:       item.genresFormatted || [item.primaryGenre, item.secondaryGenre].filter(Boolean).join(', '),
+    contentUrl:  item.imageUrlLink ? `https://www.hbomax.com${item.imageUrlLink}` : null,
     rating:      '',
     trailerUrl:  null,
   };
@@ -306,6 +363,8 @@ export class HBOStageReveal {
 
     this.currentShow = null;
     this.currentSkinManifest = null;
+    /** Keyed by themeId/skinId. Populated from getDiscoveryExperience.themeMetadata. */
+    this._themeMetadataCache = new Map();
     this.ambientSkinBlobUrl = null;
     this.ambientThemeBlobUrl = null;
 
@@ -396,10 +455,12 @@ export class HBOStageReveal {
         <div class="reveal-content">
           <div class="content-card">
             <div class="card-image">
-              <div class="card-placeholder">
-                <img class="card-poster-img" alt="" decoding="async" loading="eager" />
-                <div class="card-placeholder-icon"></div>
-              </div>
+              <a class="card-poster-link" target="_blank" rel="noopener noreferrer">
+                <div class="card-placeholder">
+                  <img class="card-poster-img" alt="" decoding="async" loading="eager" />
+                  <div class="card-placeholder-icon"></div>
+                </div>
+              </a>
             </div>
           </div>
           <div class="reveal-info">
@@ -416,8 +477,9 @@ export class HBOStageReveal {
             </div>
           </div>` : ''}
           <div class="reveal-actions">
-            <button class="btn btn-primary btn-watch">Watch Now</button>
-            <button class="btn btn-secondary btn-another">Try Another</button>
+            <a class="btn btn-primary btn-watch" target="_blank" rel="noopener noreferrer">Watch Now</a>
+            <button type="button" class="btn btn-secondary btn-trailer" disabled>Watch Trailer</button>
+            <button type="button" class="btn btn-secondary btn-another">Try Another</button>
             ${c.showShareButton === false ? '' : `
             <button type="button" class="btn btn-secondary btn-share">Share</button>`}
           </div>
@@ -433,7 +495,6 @@ export class HBOStageReveal {
 
     this.$('.btn-start').addEventListener('click', () => this._runFullSequence(), sig);
     this.$('.btn-another').addEventListener('click', () => this._tryAnother(), sig);
-    this.$('.btn-watch').addEventListener('click', () => this._goHome(), sig);
 
     const shareBtn = this.$('.btn-share');
     if (shareBtn) {
@@ -580,8 +641,39 @@ export class HBOStageReveal {
   // ─── Skin Engine ───────────────────────────────────
 
   async _loadSkin(skinId) {
-    const res = await fetch('skins/' + skinId + '/skin.json', { cache: 'no-store' });
-    const manifest = await res.json();
+    let manifest = null;
+
+    // Use cached themeMetadata if available (populated from getDiscoveryExperience in Task 8)
+    const cached = this._themeMetadataCache?.get(skinId);
+    if (cached) {
+      manifest = manifestFromThemeMetadata(cached);
+    }
+
+    // Otherwise fetch from GQL
+    if (!manifest) {
+      try {
+        const data = await this._gql(GET_THEME_METADATA, { themeId: skinId });
+        const tm = data?.getThemeMetadata;
+        if (tm) {
+          if (this._themeMetadataCache) this._themeMetadataCache.set(skinId, tm);
+          manifest = manifestFromThemeMetadata(tm);
+        }
+      } catch (e) {
+        console.warn('getThemeMetadata GQL failed, falling back to skin.json:', e.message);
+      }
+    }
+
+    // Final fallback: skin.json
+    if (!manifest) {
+      try {
+        const res = await fetch('skins/' + skinId + '/skin.json', { cache: 'no-store' });
+        manifest = await res.json();
+      } catch (e) {
+        console.warn('skin.json fallback also failed:', e.message);
+        manifest = {};
+      }
+    }
+
     this.currentSkinManifest = manifest;
     this.currentSkinId = skinId;
 
@@ -741,10 +833,19 @@ export class HBOStageReveal {
     select.innerHTML = '';
     const labels = await Promise.all(skins.map(async (skinId) => {
       try {
-        const res = await fetch('skins/' + skinId + '/skin.json', { cache: 'no-store' });
-        const data = await res.json();
-        return { id: skinId, name: data.name || skinId };
-      } catch { return { id: skinId, name: skinId }; }
+        const data = await this._gql(GET_THEME_METADATA, { themeId: skinId });
+        const name = data?.getThemeMetadata?.name;
+        return { id: skinId, name: name || skinId };
+      } catch {
+        // GQL failed — try skin.json fallback
+        try {
+          const res = await fetch('skins/' + skinId + '/skin.json', { cache: 'no-store' });
+          const d = await res.json();
+          return { id: skinId, name: d.name || skinId };
+        } catch {
+          return { id: skinId, name: skinId };
+        }
+      }
     }));
     labels.forEach(({ id, name }) => {
       const opt = document.createElement('option');
@@ -976,7 +1077,7 @@ export class HBOStageReveal {
   _getCacheKey() {
     // v5: includes vibe so each vibe selection has its own cache entry
     const vibeKey = this.selectedVibe?.id ?? 'all';
-    return `hbo_catalog_v5_${this.id}_${vibeKey}`;
+    return `hbo_catalog_v7_${this.id}_${vibeKey}`;
   }
 
   _clearCachedCatalog() {
@@ -1067,6 +1168,13 @@ export class HBOStageReveal {
         input: this._discoveryGqlInput(),
       });
       const pool = data?.getDiscoveryExperience?.heroContentPool;
+      const tm = data?.getDiscoveryExperience?.themeMetadata;
+      if (tm?.themeId) {
+        this._themeMetadataCache.set(tm.themeId, tm);
+        if (tm.visualDesignSkinId && tm.visualDesignSkinId !== tm.themeId) {
+          this._themeMetadataCache.set(tm.visualDesignSkinId, tm);
+        }
+      }
       if (Array.isArray(pool)) {
         this.fullCatalog = pool.map(normalize);
         this._syncExcludedIdsFromCatalog();
@@ -1133,7 +1241,7 @@ export class HBOStageReveal {
     const pick = pool[Math.floor(Math.random() * pool.length)];
     this.currentShowId = pick.id;
     this.recentIds.push(pick.id);
-    if (this.recentIds.length > 10) this.recentIds.shift();
+    if (this.recentIds.length > Math.max(10, this.allItems.length)) this.recentIds.shift();
     return pick;
   }
 
@@ -1184,11 +1292,34 @@ export class HBOStageReveal {
     const card = this.$('.content-card');
     const title = this.$('.reveal-title');
     const desc = this.$('.reveal-description');
+    const posterLink = this.$('.card-poster-link');
+    const watchBtn   = this.$('.btn-watch');
     const placeholder = this.$('.card-placeholder');
     const icon = placeholder.querySelector('.card-placeholder-icon');
     const posterImg = placeholder.querySelector('.card-poster-img');
 
     card.className = 'content-card';
+
+    if (show.contentUrl) {
+      if (posterLink) {
+        posterLink.href = show.contentUrl;
+        posterLink.style.cursor = 'pointer';
+      }
+      if (watchBtn) {
+        watchBtn.href = show.contentUrl;
+        watchBtn.removeAttribute('disabled');
+        watchBtn.style.pointerEvents = '';
+      }
+    } else {
+      if (posterLink) {
+        posterLink.removeAttribute('href');
+        posterLink.style.cursor = 'default';
+      }
+      if (watchBtn) {
+        watchBtn.removeAttribute('href');
+        watchBtn.style.pointerEvents = 'none';
+      }
+    }
 
     placeholder.style.backgroundImage = '';
     if (posterImg) {
