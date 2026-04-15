@@ -398,9 +398,15 @@ export class HBOStageReveal {
 
       ${c.showSkinPicker ? `
       <div class="skin-picker-corner">
-        <select class="skin-select">
-          <option value="default">Stage Spotlight</option>
-        </select>
+        <div class="custom-dropdown skin-dropdown" role="listbox" aria-label="Select theme">
+          <button class="custom-dropdown-trigger" type="button" aria-haspopup="listbox" aria-expanded="false">
+            <span class="custom-dropdown-value">Loading…</span>
+            <svg class="custom-dropdown-chevron" width="10" height="6" viewBox="0 0 10 6" fill="none" aria-hidden="true">
+              <path d="M1 1L5 5L9 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
+          <div class="custom-dropdown-menu"></div>
+        </div>
       </div>` : ''}
 
       ${c.showAmbientToggle === false ? '' : `
@@ -469,11 +475,17 @@ export class HBOStageReveal {
           </div>
           ${c.showGenrePicker ? `
           <div class="pickers-row">
-            <span class="genre-label">I'm in the mood for some</span>
+            <span class="genre-label">Mood</span>
             <div class="genre-picker">
-              <select class="genre-select">
-                <option value="">Loading…</option>
-              </select>
+              <div class="custom-dropdown genre-dropdown" role="listbox" aria-label="Select mood">
+                <button class="custom-dropdown-trigger" type="button" aria-haspopup="listbox" aria-expanded="false">
+                  <span class="custom-dropdown-value">Loading…</span>
+                  <svg class="custom-dropdown-chevron" width="10" height="6" viewBox="0 0 10 6" fill="none" aria-hidden="true">
+                    <path d="M1 1L5 5L9 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                </button>
+                <div class="custom-dropdown-menu"></div>
+              </div>
             </div>
           </div>` : ''}
           <div class="reveal-actions">
@@ -501,19 +513,75 @@ export class HBOStageReveal {
       shareBtn.addEventListener('click', () => this._shareCanvasCard(), sig);
     }
 
-    const genreSelect = this.$('.genre-select');
-    if (genreSelect) {
-      genreSelect.addEventListener('change', (e) => {
+    // Custom dropdown: open/close on trigger click
+    this.root.addEventListener('click', (e) => {
+      const trigger = e.target.closest('.custom-dropdown-trigger');
+      if (trigger) {
+        e.stopPropagation();
+        const dropdown = trigger.closest('.custom-dropdown');
+        const isOpen = dropdown.classList.contains('is-open');
+        this.$$('.custom-dropdown.is-open').forEach(d => {
+          d.classList.remove('is-open');
+          const t = d.querySelector('.custom-dropdown-trigger');
+          if (t) t.setAttribute('aria-expanded', 'false');
+        });
+        if (!isOpen) {
+          dropdown.classList.add('is-open');
+          trigger.setAttribute('aria-expanded', 'true');
+        }
+        return;
+      }
+      this.$$('.custom-dropdown.is-open').forEach(d => {
+        d.classList.remove('is-open');
+        const t = d.querySelector('.custom-dropdown-trigger');
+        if (t) t.setAttribute('aria-expanded', 'false');
+      });
+    }, sig);
+
+    // Close dropdowns on outside click
+    document.addEventListener('click', () => {
+      this.$$('.custom-dropdown.is-open').forEach(d => {
+        d.classList.remove('is-open');
+        const t = d.querySelector('.custom-dropdown-trigger');
+        if (t) t.setAttribute('aria-expanded', 'false');
+      });
+    }, sig);
+
+    // Genre dropdown item selection
+    const genreMenu = this.$('.genre-dropdown .custom-dropdown-menu');
+    if (genreMenu) {
+      genreMenu.addEventListener('click', (e) => {
+        const item = e.target.closest('.custom-dropdown-item');
+        if (!item) return;
+        const dropdown = genreMenu.closest('.custom-dropdown');
+        dropdown.classList.remove('is-open');
+        const trigger = dropdown.querySelector('.custom-dropdown-trigger');
+        if (trigger) trigger.setAttribute('aria-expanded', 'false');
+        genreMenu.querySelectorAll('.custom-dropdown-item').forEach(i => i.classList.remove('is-selected'));
+        item.classList.add('is-selected');
+        const valEl = dropdown.querySelector('.custom-dropdown-value');
+        if (valEl) valEl.textContent = item.textContent.trim();
         this._unlockAmbientAudio();
-        this._onGenreChange(e);
+        this._onGenreChange({ target: { value: item.dataset.value } });
       }, sig);
     }
 
-    const skinSelect = this.$('.skin-select');
-    if (skinSelect) {
-      skinSelect.addEventListener('change', (e) => {
+    // Skin dropdown item selection
+    const skinMenu = this.$('.skin-dropdown .custom-dropdown-menu');
+    if (skinMenu) {
+      skinMenu.addEventListener('click', (e) => {
+        const item = e.target.closest('.custom-dropdown-item');
+        if (!item) return;
+        const dropdown = skinMenu.closest('.custom-dropdown');
+        dropdown.classList.remove('is-open');
+        const trigger = dropdown.querySelector('.custom-dropdown-trigger');
+        if (trigger) trigger.setAttribute('aria-expanded', 'false');
+        skinMenu.querySelectorAll('.custom-dropdown-item').forEach(i => i.classList.remove('is-selected'));
+        item.classList.add('is-selected');
+        const valEl = dropdown.querySelector('.custom-dropdown-value');
+        if (valEl) valEl.textContent = item.textContent.trim();
         this._unlockAmbientAudio();
-        this._switchSkin(e.target.value);
+        this._switchSkin(item.dataset.value);
       }, sig);
     }
 
@@ -560,8 +628,7 @@ export class HBOStageReveal {
       }
       await this._loadSkin(skinId);
 
-      const skinSelect = this.$('.skin-select');
-      if (skinSelect) skinSelect.value = skinId;
+      this._syncSkinDropdownValue(skinId);
 
       this._initPlayer();
     } catch (e) {
@@ -740,7 +807,15 @@ export class HBOStageReveal {
       if (manifest.reveal.anotherButtonText) this.$('.btn-another').textContent = manifest.reveal.anotherButtonText;
     }
     const label = this.$('.genre-label');
-    if (manifest.moodText && label) label.textContent = manifest.moodText;
+    if (label) {
+      if (manifest.moodText) {
+        label.textContent = manifest.moodText;
+        label.classList.add('has-mood-text');
+      } else {
+        label.textContent = 'Mood';
+        label.classList.remove('has-mood-text');
+      }
+    }
     if (manifest.particleColor) {
       this.root.style.setProperty('--particle-rgb', manifest.particleColor);
     }
@@ -828,16 +903,15 @@ export class HBOStageReveal {
   }
 
   async _populateSkinDropdown(skins) {
-    const select = this.$('.skin-select');
-    if (!select) return;
-    select.innerHTML = '';
+    const menu = this.$('.skin-dropdown .custom-dropdown-menu');
+    if (!menu) return;
+    menu.innerHTML = '';
     const labels = await Promise.all(skins.map(async (skinId) => {
       try {
         const data = await this._gql(GET_THEME_METADATA, { themeId: skinId });
         const name = data?.getThemeMetadata?.name;
         return { id: skinId, name: name || skinId };
       } catch {
-        // GQL failed — try skin.json fallback
         try {
           const res = await fetch('skins/' + skinId + '/skin.json', { cache: 'no-store' });
           const d = await res.json();
@@ -847,12 +921,22 @@ export class HBOStageReveal {
         }
       }
     }));
-    labels.forEach(({ id, name }) => {
-      const opt = document.createElement('option');
-      opt.value = id;
-      opt.textContent = name;
-      select.appendChild(opt);
+    labels.forEach(({ id, name }, i) => {
+      const item = document.createElement('div');
+      item.className = 'custom-dropdown-item' + (i === 0 ? ' is-selected' : '');
+      item.setAttribute('role', 'option');
+      item.dataset.value = id;
+      item.textContent = name;
+      menu.appendChild(item);
     });
+  }
+
+  _syncSkinDropdownValue(skinId) {
+    const items = this.$$('.skin-dropdown .custom-dropdown-item');
+    items.forEach(item => item.classList.toggle('is-selected', item.dataset.value === skinId));
+    const selected = this.$('.skin-dropdown .custom-dropdown-item.is-selected');
+    const valEl = this.$('.skin-dropdown .custom-dropdown-value');
+    if (valEl && selected) valEl.textContent = selected.textContent.trim();
   }
 
   _animateSkinHeroes() {
@@ -1248,15 +1332,19 @@ export class HBOStageReveal {
   // ─── UI Helpers ────────────────────────────────────
 
   _populateGenreDropdown(vibeOptions) {
-    const select = this.$('.genre-select');
-    if (!select) return;
-    select.innerHTML = '';
+    const menu = this.$('.genre-dropdown .custom-dropdown-menu');
+    const valEl = this.$('.genre-dropdown .custom-dropdown-value');
+    if (!menu) return;
+    menu.innerHTML = '';
     vibeOptions.forEach((v, i) => {
-      const opt = document.createElement('option');
-      opt.value = i;
-      opt.textContent = v.label;
-      select.appendChild(opt);
+      const item = document.createElement('div');
+      item.className = 'custom-dropdown-item' + (i === 0 ? ' is-selected' : '');
+      item.setAttribute('role', 'option');
+      item.dataset.value = i;
+      item.textContent = v.label;
+      menu.appendChild(item);
     });
+    if (valEl && vibeOptions.length > 0) valEl.textContent = vibeOptions[0].label;
   }
 
   _dismissLoadingOverlay() {
@@ -1365,6 +1453,13 @@ export class HBOStageReveal {
     flare.classList.add('animate');
     glow.classList.add('animate');
     this._animateSkinHeroes();
+
+    const watchBtn = this.$('.btn-watch');
+    if (watchBtn) {
+      watchBtn.classList.remove('reveal-pulse');
+      forceReflow(watchBtn);
+      watchBtn.classList.add('reveal-pulse');
+    }
   }
 
   _resetRevealElements() {
@@ -1384,6 +1479,8 @@ export class HBOStageReveal {
       el.style.opacity = '';
     });
     if (flash) flash.classList.remove('fire');
+    const watchBtn = this.$('.btn-watch');
+    if (watchBtn) watchBtn.classList.remove('reveal-pulse');
     this._resetSkinHeroes();
 
     card.style.opacity = '0';
@@ -1757,8 +1854,7 @@ export class HBOStageReveal {
 
   setSkin(skinId) {
     this._switchSkin(skinId);
-    const select = this.$('.skin-select');
-    if (select) select.value = skinId;
+    this._syncSkinDropdownValue(skinId);
   }
 
   /** Generates and shares or downloads a 1200×630 PNG card for the current recommendation. */
