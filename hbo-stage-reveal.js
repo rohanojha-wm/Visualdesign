@@ -1700,15 +1700,30 @@ export class HBOStageReveal {
 
     const title = this.$('.idle-title');
     const btn = this.$('.btn-start');
-    title.style.animation = 'none';
-    btn.style.animation = 'none';
-    forceReflow(title);
-    title.style.animation = 'fadeUp 0.8s ease 0.1s forwards';
-    btn.style.animation = 'fadeUp 0.8s ease 0.3s forwards';
-    title.style.opacity = '0';
-    title.style.transform = 'translateY(20px)';
-    btn.style.opacity = '0';
-    btn.style.transform = 'translateY(20px)';
+    const dur = _reducedMotion ? 0 : 1;
+    gsap.killTweensOf([title, btn]);
+    gsap.fromTo(
+      title,
+      { autoAlpha: 0, y: 20 },
+      {
+        autoAlpha: 1,
+        y: 0,
+        duration: 0.8 * dur,
+        ease: 'power2.out',
+        delay: 0.1 * dur,
+      },
+    );
+    gsap.fromTo(
+      btn,
+      { autoAlpha: 0, y: 20 },
+      {
+        autoAlpha: 1,
+        y: 0,
+        duration: 0.8 * dur,
+        ease: 'power2.out',
+        delay: 0.3 * dur,
+      },
+    );
   }
 
   async _onGenreChange(e) {
