@@ -878,7 +878,7 @@ export class HBOStageReveal {
       gsap.set(el, { x: baseX, y: baseY, rotation: baseRot, autoAlpha: 0 });
 
       // Fade in with stagger
-      gsap.to(el, { autoAlpha: opacity, duration: 0.6, delay });
+      const tf = gsap.to(el, { autoAlpha: opacity, duration: 0.6, delay });
 
       // Horizontal drift loop
       const tx = gsap.to(el, {
@@ -910,7 +910,7 @@ export class HBOStageReveal {
         repeat: -1,
       });
 
-      this._scatterTweens.push(tx, ty, tr);
+      this._scatterTweens.push(tf, tx, ty, tr);
     }
   }
 
