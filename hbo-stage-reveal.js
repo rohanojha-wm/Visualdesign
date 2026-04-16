@@ -1465,6 +1465,7 @@ export class HBOStageReveal {
   // ─── Animation Sequences ──────────────────────────
 
   _animateRevealElements() {
+    const dur = _reducedMotion ? 0 : 1;
     const card = this.$('.content-card');
     const info = this.$('.reveal-info');
     const actions = this.$('.reveal-actions');
@@ -1474,14 +1475,45 @@ export class HBOStageReveal {
     const flare = this.$('.spotlight-flare');
     const glow = this.$('.stage-glow');
 
-    card.classList.add('animate');
-    info.classList.add('animate');
-    if (pickersRow) pickersRow.classList.add('animate');
-    actions.classList.add('animate');
-    spotBright.classList.add('animate');
-    spotAccent.classList.add('animate');
-    flare.classList.add('animate');
-    glow.classList.add('animate');
+    // Sequencing matches former CSS keyframes on `.animate` (see hbo-stage-reveal.css):
+    // card 0.9s @0; bright 1.2s @0.3s; flare 1s @0.4s; info 0.8s @0.4s; accent 1.4s @0.5s;
+    // glow 1.5s @0.5s; pickers 0.7s @0.6s; actions 0.7s @0.7s.
+    const tl = gsap.timeline();
+    tl.to(card, {
+      autoAlpha: 1,
+      scale: 1,
+      duration: 0.9 * dur,
+      ease: 'power4.out',
+    }, 0);
+    if (spotBright) {
+      tl.to(spotBright, { autoAlpha: 1, duration: 1.2 * dur, ease: 'power2.out' }, 0.3 * dur);
+    }
+    if (flare) {
+      tl.fromTo(
+        flare,
+        { autoAlpha: 0, scale: 0.5 },
+        {
+          autoAlpha: 1,
+          scale: 1,
+          duration: 1 * dur,
+          ease: 'power2.out',
+          transformOrigin: '50% 50%',
+        },
+        0.4 * dur,
+      );
+    }
+    tl.to(info, { autoAlpha: 1, y: 0, duration: 0.8 * dur, ease: 'power2.out' }, 0.4 * dur);
+    if (spotAccent) {
+      tl.to(spotAccent, { autoAlpha: 1, duration: 1.4 * dur, ease: 'power2.out' }, 0.5 * dur);
+    }
+    if (glow) {
+      tl.to(glow, { autoAlpha: 1, duration: 1.5 * dur, ease: 'power2.out' }, 0.5 * dur);
+    }
+    if (pickersRow) {
+      tl.to(pickersRow, { autoAlpha: 1, y: 0, duration: 0.7 * dur, ease: 'power2.out' }, 0.6 * dur);
+    }
+    tl.to(actions, { autoAlpha: 1, y: 0, duration: 0.7 * dur, ease: 'power2.out' }, 0.7 * dur);
+
     this._animateSkinHeroes();
 
     const watchBtn = this.$('.btn-watch');
