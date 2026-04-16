@@ -357,7 +357,7 @@ export class HBOStageReveal {
     this.currentSkinId = null;
     this.skinLinkEl = null;
     this.skinFontLinkEl = null;
-    this.scatterAnimFrame = null;
+    this._scatterTweens = [];
     this.recentIds = [];
     /** Cumulative content ids from GQL — sent as excludeIds on the next hero fetch. */
     this.apiExcludedIds = [];
@@ -834,16 +834,17 @@ export class HBOStageReveal {
   _spawnScatterLogos(skinId, manifest) {
     const container = this.$('.skin-scatter');
     container.innerHTML = '';
-    if (this.scatterAnimFrame) {
-      cancelAnimationFrame(this.scatterAnimFrame);
-      this.scatterAnimFrame = null;
+
+    // Kill any tweens from a previous skin's scatter icons
+    if (this._scatterTweens) {
+      this._scatterTweens.forEach(t => t.kill());
     }
+    this._scatterTweens = [];
 
     const logos = manifest.scatterFiles;
     if (!logos || logos.length === 0) return;
 
     const count = manifest.scatterCount || 16;
-    const icons = [];
 
     for (let i = 0; i < count; i++) {
       const src = 'skins/' + skinId + '/' + logos[i % logos.length];
@@ -852,9 +853,10 @@ export class HBOStageReveal {
       el.className = 'scatter-icon';
       el.style.width = size + 'px';
       el.style.height = size + 'px';
-      el.style.left = Math.random() * 100 + '%';
-      el.style.top = Math.random() * 100 + '%';
-      el.style.transform = 'rotate(' + (Math.random() * 40 - 20) + 'deg)';
+      // Position with transforms (not left/top) so GSAP can own them
+      el.style.position = 'absolute';
+      el.style.left = '0';
+      el.style.top = '0';
 
       const img = document.createElement('img');
       img.src = src;
@@ -862,36 +864,54 @@ export class HBOStageReveal {
       el.appendChild(img);
       container.appendChild(el);
 
-      icons.push({
-        el, baseX: Math.random() * 100, baseY: Math.random() * 100,
-        driftX: 0.3 + Math.random() * 0.6, driftY: 0.2 + Math.random() * 0.5,
-        phaseX: Math.random() * Math.PI * 2, phaseY: Math.random() * Math.PI * 2,
-        rotSpeed: (Math.random() - 0.5) * 0.3, baseRot: Math.random() * 40 - 20,
-        fadeDelay: i * 80, opacity: 0.08 + Math.random() * 0.12,
+      const baseX = Math.random() * (container.offsetWidth || window.innerWidth);
+      const baseY = Math.random() * (container.offsetHeight || window.innerHeight);
+      const driftX = 12 + Math.random() * 18;
+      const driftY = 8 + Math.random() * 14;
+      const duration = 5.5 + Math.random() * 6;
+      const baseRot = Math.random() * 40 - 20;
+      const rotRange = 8 + Math.random() * 10;
+      const opacity = 0.08 + Math.random() * 0.12;
+      const delay = i * 0.08;
+
+      // Set starting position
+      gsap.set(el, { x: baseX, y: baseY, rotation: baseRot, autoAlpha: 0 });
+
+      // Fade in with stagger
+      gsap.to(el, { autoAlpha: opacity, duration: 0.6, delay });
+
+      // Horizontal drift loop
+      const tx = gsap.to(el, {
+        x: baseX + driftX,
+        duration: duration * 0.6,
+        delay,
+        ease: 'sine.inOut',
+        yoyo: true,
+        repeat: -1,
       });
+
+      // Vertical drift loop (different period for organic feel)
+      const ty = gsap.to(el, {
+        y: baseY + driftY,
+        duration: duration,
+        delay,
+        ease: 'sine.inOut',
+        yoyo: true,
+        repeat: -1,
+      });
+
+      // Rotation loop
+      const tr = gsap.to(el, {
+        rotation: baseRot + rotRange,
+        duration: duration * 1.3,
+        delay,
+        ease: 'sine.inOut',
+        yoyo: true,
+        repeat: -1,
+      });
+
+      this._scatterTweens.push(tx, ty, tr);
     }
-
-    icons.forEach(icon => {
-      setTimeout(() => {
-        icon.el.classList.add('visible');
-        icon.el.style.opacity = icon.opacity;
-      }, icon.fadeDelay);
-    });
-
-    const startTime = performance.now();
-    const animate = (now) => {
-      const elapsed = (now - startTime) / 1000;
-      for (const icon of icons) {
-        const x = icon.baseX + Math.sin(elapsed * icon.driftX + icon.phaseX) * 2;
-        const y = icon.baseY + Math.cos(elapsed * icon.driftY + icon.phaseY) * 2;
-        const rot = icon.baseRot + Math.sin(elapsed * icon.rotSpeed) * 8;
-        icon.el.style.left = x + '%';
-        icon.el.style.top = y + '%';
-        icon.el.style.transform = 'rotate(' + rot + 'deg)';
-      }
-      this.scatterAnimFrame = requestAnimationFrame(animate);
-    };
-    this.scatterAnimFrame = requestAnimationFrame(animate);
   }
 
   async _switchSkin(skinId) {
@@ -1876,7 +1896,7 @@ export class HBOStageReveal {
     this.destroyed = true;
     this.abortController.abort();
     this._disposeAmbientAudio();
-    if (this.scatterAnimFrame) cancelAnimationFrame(this.scatterAnimFrame);
+    if (this._scatterTweens) this._scatterTweens.forEach(t => t.kill());
     if (this.player && typeof this.player.destroy === 'function') this.player.destroy();
     if (this.skinLinkEl) this.skinLinkEl.remove();
     if (this.skinFontLinkEl) this.skinFontLinkEl.remove();
