@@ -1,0 +1,66 @@
+/* The Last of Us skin — post-apocalyptic forest green + amber bioluminescence */
+
+.hbo-stage[data-skin="the-last-of-us"] {
+  --accent: #c87820;
+  --accent-rgb: 200, 120, 32;
+  --bg-tint-rgb: 40, 100, 20;
+  --reveal-bg-top: #020802;
+  --reveal-bg-mid: #050f03;
+  --reveal-bg-bot: #080c04;
+  --cinematic-grad: linear-gradient(170deg, #030a02 0%, #071206 30%, #050e04 60%, #0a1205 100%);
+  --btn-primary-bg: #c87820;
+  --btn-primary-color: #fff8e8;
+  --btn-primary-hover: #e09030;
+  --btn-secondary-border: #4a6020;
+  --btn-secondary-color: #a0c870;
+  --particle-rgb: 80, 160, 60;
+}
+
+/* Idle — dim forest green atmospheric glow */
+.hbo-stage[data-skin="the-last-of-us"] .skin-hero--idle {
+  display: block;
+  background:
+    radial-gradient(ellipse at 50% 70%, rgba(80, 160, 40, 0.07) 0%, transparent 55%),
+    radial-gradient(ellipse at 20% 90%, rgba(40, 80, 10, 0.05) 0%, transparent 40%),
+    radial-gradient(ellipse at 80% 85%, rgba(200, 120, 32, 0.04) 0%, transparent 35%);
+}
+
+/* Transition — spore burst from center */
+.hbo-stage[data-skin="the-last-of-us"] .skin-hero--transition {
+  display: block;
+  background: radial-gradient(ellipse at 50% 50%, rgba(80, 160, 40, 0.08) 0%, transparent 60%);
+}
+
+/* Reveal — bioluminescent glow above card */
+.hbo-stage[data-skin="the-last-of-us"] .skin-hero--reveal {
+  display: block;
+}
+
+.hbo-stage[data-skin="the-last-of-us"] .skin-hero--reveal::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 700px;
+  height: 100%;
+  background:
+    radial-gradient(ellipse at 50% 15%, rgba(80, 160, 40, 0.12) 0%, rgba(40, 80, 20, 0.06) 35%, transparent 60%);
+  opacity: 0;
+  z-index: 10;
+}
+
+.hbo-stage[data-skin="the-last-of-us"] .skin-hero--reveal.animate::after {
+  animation: tlouGlowIn 1.5s ease 0.5s forwards;
+}
+
+@keyframes tlouGlowIn {
+  0% { opacity: 0; }
+  100% { opacity: 1; }
+}
+
+/* Amber spotlight tint instead of default purple */
+.hbo-stage[data-skin="the-last-of-us"] .stage-glow {
+  background:
+    radial-gradient(ellipse at center, rgba(200, 120, 32, 0.3) 0%, rgba(80, 160, 40, 0.08) 40%, transparent 65%);
+}

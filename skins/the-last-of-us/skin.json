@@ -1,0 +1,18 @@
+{
+  "id": "the-last-of-us",
+  "name": "The Last of Us",
+  "fontFamily": "inherit",
+  "moodText": "Tonight, you need something that will",
+  "idle": {
+    "title": "What Will You Survive Tonight?",
+    "buttonText": "Scavenge a Pick"
+  },
+  "reveal": {
+    "watchButtonText": "Survive Now",
+    "anotherButtonText": "Another Lead"
+  },
+  "particleColor": "80, 160, 60",
+  "scatterFiles": ["scatter/icon-1.svg", "scatter/icon-2.svg"],
+  "scatterCount": 70,
+  "ambientVolume": 0.15
+}
