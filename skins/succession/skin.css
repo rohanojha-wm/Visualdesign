@@ -1,0 +1,76 @@
+/* Succession skin — cold corporate noir, near-black with muted gold */
+
+.hbo-stage[data-skin="succession"] {
+  --accent: #b8a060;
+  --accent-rgb: 184, 160, 96;
+  --bg-tint-rgb: 120, 100, 50;
+  --reveal-bg-top: #030305;
+  --reveal-bg-mid: #060608;
+  --reveal-bg-bot: #040406;
+  --cinematic-grad: linear-gradient(170deg, #040406 0%, #070709 30%, #050507 60%, #080808 100%);
+  --btn-primary-bg: #b8a060;
+  --btn-primary-color: #0a0a10;
+  --btn-primary-hover: #d0b870;
+  --btn-secondary-border: #3a3020;
+  --btn-secondary-color: #908060;
+  --particle-rgb: 184, 160, 96;
+}
+
+/* Hide spotlights — corporate aesthetic is cold and flat */
+.hbo-stage[data-skin="succession"] .spotlight-cone,
+.hbo-stage[data-skin="succession"] .spotlight-flare {
+  display: none !important;
+}
+
+/* Idle — cold barely-there glow, Manhattan at night */
+.hbo-stage[data-skin="succession"] .skin-hero--idle {
+  display: block;
+  background:
+    radial-gradient(ellipse at 50% 60%, rgba(184, 160, 96, 0.04) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 30%, rgba(120, 140, 180, 0.03) 0%, transparent 40%);
+}
+
+/* Transition */
+.hbo-stage[data-skin="succession"] .skin-hero--transition {
+  display: block;
+  background: radial-gradient(ellipse at 50% 50%, rgba(184, 160, 96, 0.05) 0%, transparent 60%);
+}
+
+/* Reveal — subtle gold underlight */
+.hbo-stage[data-skin="succession"] .skin-hero--reveal {
+  display: block;
+}
+
+.hbo-stage[data-skin="succession"] .skin-hero--reveal::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 700px;
+  height: 100%;
+  background:
+    radial-gradient(ellipse at 50% 90%, rgba(184, 160, 96, 0.08) 0%, transparent 45%);
+  opacity: 0;
+  z-index: 10;
+}
+
+.hbo-stage[data-skin="succession"] .skin-hero--reveal.animate::after {
+  animation: successionGlowIn 1.8s ease 0.6s forwards;
+}
+
+@keyframes successionGlowIn {
+  0% { opacity: 0; }
+  100% { opacity: 1; }
+}
+
+/* Muted gold stage glow */
+.hbo-stage[data-skin="succession"] .stage-glow {
+  background:
+    radial-gradient(ellipse at center, rgba(184, 160, 96, 0.20) 0%, rgba(120, 100, 50, 0.08) 40%, transparent 65%);
+}
+
+/* Smaller scatterCount — fewer, more refined icons */
+.hbo-stage[data-skin="succession"] .reveal-title {
+  letter-spacing: -0.03em;
+}

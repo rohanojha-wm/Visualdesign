@@ -1,0 +1,18 @@
+{
+  "id": "succession",
+  "name": "Succession",
+  "fontFamily": "inherit",
+  "moodText": "The board recommends",
+  "idle": {
+    "title": "What Does Your Empire Watch Tonight?",
+    "buttonText": "Make the Call"
+  },
+  "reveal": {
+    "watchButtonText": "Watch Now",
+    "anotherButtonText": "Another Deal"
+  },
+  "particleColor": "184, 160, 96",
+  "scatterFiles": ["scatter/icon-1.svg", "scatter/icon-2.svg"],
+  "scatterCount": 50,
+  "ambientVolume": 0.12
+}
