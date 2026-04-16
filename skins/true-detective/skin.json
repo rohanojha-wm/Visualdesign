@@ -1,0 +1,18 @@
+{
+  "id": "true-detective",
+  "name": "True Detective",
+  "fontFamily": "inherit",
+  "moodText": "The night is dark and full of",
+  "idle": {
+    "title": "Time Is a Flat Circle. Pick Something.",
+    "buttonText": "Investigate"
+  },
+  "reveal": {
+    "watchButtonText": "Investigate",
+    "anotherButtonText": "Different Case"
+  },
+  "particleColor": "180, 160, 48",
+  "scatterFiles": ["scatter/icon-1.svg", "scatter/icon-2.svg"],
+  "scatterCount": 60,
+  "ambientVolume": 0.15
+}
