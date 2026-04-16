@@ -321,7 +321,7 @@ export class HBOStageReveal {
 
   static defaults = {
     skin: 'default',
-    availableSkins: ['default', 'batman', 'harry-potter', 'halloween', 'game-of-thrones'],
+    availableSkins: ['default', 'batman', 'harry-potter', 'halloween', 'game-of-thrones', 'the-last-of-us', 'euphoria', 'house-of-dragon', 'succession', 'white-lotus', 'true-detective'],
     introVideoId: null,
     graphqlEndpoint: 'http://localhost:8000/graphql',
     showSkinPicker: true,
