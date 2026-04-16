@@ -1,0 +1,73 @@
+/* Euphoria skin — deep midnight purple + hot pink/cyan neon glitter */
+
+.hbo-stage[data-skin="euphoria"] {
+  --accent: #e040fb;
+  --accent-rgb: 224, 64, 251;
+  --bg-tint-rgb: 160, 20, 200;
+  --reveal-bg-top: #04000a;
+  --reveal-bg-mid: #080012;
+  --reveal-bg-bot: #060010;
+  --cinematic-grad: linear-gradient(170deg, #050008 0%, #0a0018 30%, #070012 60%, #0c001a 100%);
+  --btn-primary-bg: #e040fb;
+  --btn-primary-color: #fff0ff;
+  --btn-primary-hover: #f060ff;
+  --btn-secondary-border: #6020a0;
+  --btn-secondary-color: #d080f0;
+  --particle-rgb: 224, 64, 251;
+}
+
+/* Idle — neon bokeh haze */
+.hbo-stage[data-skin="euphoria"] .skin-hero--idle {
+  display: block;
+  background:
+    radial-gradient(ellipse at 30% 60%, rgba(224, 64, 251, 0.08) 0%, transparent 45%),
+    radial-gradient(ellipse at 70% 40%, rgba(64, 180, 251, 0.06) 0%, transparent 40%),
+    radial-gradient(ellipse at 50% 80%, rgba(251, 64, 130, 0.05) 0%, transparent 35%);
+}
+
+/* Transition */
+.hbo-stage[data-skin="euphoria"] .skin-hero--transition {
+  display: block;
+  background: radial-gradient(ellipse at 50% 50%, rgba(224, 64, 251, 0.1) 0%, transparent 60%);
+}
+
+/* Reveal — neon halo above card */
+.hbo-stage[data-skin="euphoria"] .skin-hero--reveal {
+  display: block;
+}
+
+.hbo-stage[data-skin="euphoria"] .skin-hero--reveal::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 800px;
+  height: 100%;
+  background:
+    radial-gradient(ellipse at 40% 20%, rgba(224, 64, 251, 0.15) 0%, transparent 45%),
+    radial-gradient(ellipse at 60% 15%, rgba(64, 180, 251, 0.10) 0%, transparent 40%);
+  opacity: 0;
+  z-index: 10;
+}
+
+.hbo-stage[data-skin="euphoria"] .skin-hero--reveal.animate::after {
+  animation: euphoriaGlowIn 1.2s ease 0.4s forwards;
+}
+
+@keyframes euphoriaGlowIn {
+  0% { opacity: 0; }
+  100% { opacity: 1; }
+}
+
+/* Neon stage glow */
+.hbo-stage[data-skin="euphoria"] .stage-glow {
+  background:
+    radial-gradient(ellipse at center, rgba(224, 64, 251, 0.4) 0%, rgba(160, 20, 200, 0.15) 35%, transparent 65%),
+    radial-gradient(ellipse at center, rgba(64, 180, 251, 0.08) 0%, transparent 50%);
+}
+
+/* Spotlight — hot pink tint */
+.hbo-stage[data-skin="euphoria"] .spotlight-cone--bright {
+  filter: hue-rotate(60deg) saturate(1.5);
+}

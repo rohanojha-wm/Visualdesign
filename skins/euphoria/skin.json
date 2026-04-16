@@ -1,0 +1,18 @@
+{
+  "id": "euphoria",
+  "name": "Euphoria",
+  "fontFamily": "inherit",
+  "moodText": "Tonight feels like",
+  "idle": {
+    "title": "How Are You Feeling Tonight?",
+    "buttonText": "Feel Something"
+  },
+  "reveal": {
+    "watchButtonText": "Feel It",
+    "anotherButtonText": "Different Vibe"
+  },
+  "particleColor": "224, 64, 251",
+  "scatterFiles": ["scatter/icon-1.svg", "scatter/icon-2.svg"],
+  "scatterCount": 100,
+  "ambientVolume": 0.15
+}
