@@ -1110,7 +1110,9 @@
 }
 
 .hbo-stage .btn-secondary {
-  background: transparent;
+  background: rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   color: var(--btn-secondary-color);
   border: 1px solid var(--btn-secondary-border);
   transition: all 0.4s ease;
