@@ -1506,24 +1506,25 @@ export class HBOStageReveal {
     [card, info, actions, pickersRow, spotBright, spotAccent, flare, glow].forEach(el => {
       if (!el) return;
       el.classList.remove('animate', 'swap-out', 'swap-in', 'swap-flicker', 'fire');
-      el.style.opacity = '';
+      const clearProps =
+        el === card || el === info || el === actions || el === pickersRow
+          ? 'opacity,visibility,transform'
+          : 'opacity,visibility';
+      gsap.set(el, { clearProps });
     });
     if (flash) flash.classList.remove('fire');
     const watchBtn = this.$('.btn-watch');
     if (watchBtn) watchBtn.classList.remove('reveal-pulse');
     this._resetSkinHeroes();
 
-    card.style.opacity = '0';
-    card.style.transform = 'scale(0.95)';
-    info.style.opacity = '0';
-    info.style.transform = 'translateY(12px)';
-    if (pickersRow) { pickersRow.style.opacity = '0'; pickersRow.style.transform = 'translateY(12px)'; }
-    actions.style.opacity = '0';
-    actions.style.transform = 'translateY(12px)';
-    spotBright.style.opacity = '0';
-    spotAccent.style.opacity = '0';
-    flare.style.opacity = '0';
-    glow.style.opacity = '0';
+    gsap.set(card, { autoAlpha: 0, scale: 0.95 });
+    gsap.set(info, { autoAlpha: 0, y: 12 });
+    if (pickersRow) gsap.set(pickersRow, { autoAlpha: 0, y: 12 });
+    gsap.set(actions, { autoAlpha: 0, y: 12 });
+    gsap.set(spotBright, { autoAlpha: 0 });
+    gsap.set(spotAccent, { autoAlpha: 0 });
+    gsap.set(flare, { autoAlpha: 0 });
+    gsap.set(glow, { autoAlpha: 0 });
   }
 
   async _runFullSequence() {
