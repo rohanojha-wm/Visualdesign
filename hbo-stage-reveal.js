@@ -1990,6 +1990,9 @@ export class HBOStageReveal {
     this.destroyed = true;
     this.abortController.abort();
     this._disposeAmbientAudio();
+    // Kill all GSAP tweens on any element within this root
+    if (this.root) gsap.killTweensOf(this.root.querySelectorAll('*'));
+    // Also kill scatter tweens by reference (may already be done above but be safe)
     if (this._scatterTweens) this._scatterTweens.forEach(t => t.kill());
     if (this.player && typeof this.player.destroy === 'function') this.player.destroy();
     if (this.skinLinkEl) this.skinLinkEl.remove();
