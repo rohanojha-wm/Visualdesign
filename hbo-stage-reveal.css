@@ -1015,6 +1015,12 @@
   margin-top: 20px;
   opacity: 0;
   transform: translateY(12px);
+  background: rgba(0, 0, 0, 0.22);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 12px;
+  padding: 16px 28px 20px;
 }
 
 .hbo-stage .reveal-title {
