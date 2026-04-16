@@ -1630,47 +1630,61 @@ export class HBOStageReveal {
     this.isAnimating = false;
   }
 
-  async _tryAnother() {
+  _tryAnother() {
     if (this.isAnimating) return;
     this.isAnimating = true;
 
+    const dur = _reducedMotion ? 0 : 1;
     const card = this.$('.content-card');
     const info = this.$('.reveal-info');
-    const flash = this.$('.swap-flash');
+    const actions = this.$('.reveal-actions');
+    const pickersRow = this.$('.pickers-row');
     const spotBright = this.$('.frame-reveal .spotlight-cone--bright');
     const spotAccent = this.$('.frame-reveal .spotlight-cone--accent');
+    const flare = this.$('.spotlight-flare');
+    const glow = this.$('.stage-glow');
 
-    card.classList.remove('animate', 'swap-in');
-    info.classList.remove('animate', 'swap-in');
-    spotBright.classList.add('swap-flicker');
-    spotAccent.classList.add('swap-flicker');
-    card.classList.add('swap-out');
-    info.classList.add('swap-out');
+    const tl = gsap.timeline({
+      onComplete: () => {
+        void (async () => {
+          try {
+            const show = await this._fetchRandomShow();
+            if (!show) {
+              this._resetRevealElements();
+              this._animateRevealElements();
+              return;
+            }
+            this._applyShow(show);
+            if (this.config.onReveal) this.config.onReveal(show);
+            this._createParticles(this.$('.particles-reveal'), 25);
 
-    await wait(350);
-    flash.classList.remove('fire');
-    forceReflow(flash);
-    flash.classList.add('fire');
-    await wait(150);
+            this._resetRevealElements();
+            this._animateRevealElements();
+          } finally {
+            this.isAnimating = false;
+          }
+        })();
+      },
+    });
 
-    const show = await this._fetchRandomShow();
-    if (!show) { this.isAnimating = false; return; }
-    this._applyShow(show);
-    if (this.config.onReveal) this.config.onReveal(show);
-    this._createParticles(this.$('.particles-reveal'), 25);
-
-    card.classList.remove('swap-out');
-    info.classList.remove('swap-out');
-    card.classList.add('swap-in');
-    info.classList.add('swap-in');
-
-    await wait(700);
-    spotBright.classList.remove('swap-flicker');
-    spotAccent.classList.remove('swap-flicker');
-    spotBright.classList.add('animate');
-    spotAccent.classList.add('animate');
-
-    this.isAnimating = false;
+    tl.to(card, { autoAlpha: 0, y: 20, duration: 0.3 * dur, ease: 'power2.in' }, 0);
+    tl.to(info, { autoAlpha: 0, y: 10, duration: 0.25 * dur, ease: 'power2.in' }, 0);
+    tl.to(actions, { autoAlpha: 0, y: 10, duration: 0.2 * dur, ease: 'power2.in' }, 0.05 * dur);
+    if (pickersRow) {
+      tl.to(pickersRow, { autoAlpha: 0, y: 10, duration: 0.2 * dur, ease: 'power2.in' }, 0.05 * dur);
+    }
+    if (spotBright) tl.to(spotBright, { autoAlpha: 0, duration: 0.28 * dur, ease: 'power2.in' }, 0);
+    if (spotAccent) tl.to(spotAccent, { autoAlpha: 0, duration: 0.28 * dur, ease: 'power2.in' }, 0);
+    if (flare) {
+      tl.to(flare, {
+        autoAlpha: 0,
+        scale: 0.5,
+        duration: 0.2 * dur,
+        ease: 'power2.in',
+        transformOrigin: '50% 50%',
+      }, 0);
+    }
+    if (glow) tl.to(glow, { autoAlpha: 0, duration: 0.25 * dur, ease: 'power2.in' }, 0);
   }
 
   _goHome() {
