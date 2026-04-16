@@ -917,10 +917,8 @@ export class HBOStageReveal {
   async _switchSkin(skinId) {
     if (skinId === this.currentSkinId || this.isAnimating) return;
 
-    const overlay = this.$('.theme-transition');
-    overlay.classList.remove('fire');
-    forceReflow(overlay);
-    overlay.classList.add('fire');
+    const blackout = getComputedStyle(this.root).getPropertyValue('--black').trim() || '#000000';
+    this._flashThemeOverlay(blackout);
 
     await wait(300);
     await this._loadSkin(skinId);
@@ -1380,8 +1378,24 @@ export class HBOStageReveal {
   _dismissLoadingOverlay() {
     const overlay = this.$('.hbo-loading-overlay');
     if (!overlay) return;
-    overlay.classList.add('fade-out');
-    setTimeout(() => overlay.classList.add('hidden'), 800);
+    const dur = _reducedMotion ? 0 : 1;
+    gsap.to(overlay, {
+      autoAlpha: 0,
+      duration: 0.4 * dur,
+      ease: 'power2.out',
+      onComplete: () => overlay.remove(),
+    });
+  }
+
+  /** Full-screen blackout flash when switching skins (replaces CSS `.theme-transition.fire`). */
+  _flashThemeOverlay(color) {
+    const overlay = this.$('.theme-transition');
+    if (!overlay) return;
+    const dur = _reducedMotion ? 0 : 1;
+    gsap.killTweensOf(overlay);
+    gsap.timeline()
+      .set(overlay, { backgroundColor: color, autoAlpha: 0.8 })
+      .to(overlay, { autoAlpha: 0, duration: 0.5 * dur, ease: 'power2.out' });
   }
 
   _switchFrame(from, to) {
@@ -1616,14 +1630,32 @@ export class HBOStageReveal {
     this._createParticles(this.$('.particles-reveal'), 25);
 
     await wait(200);
-    spotlightDim.classList.add('animate');
     await wait(800);
     spinner.classList.remove('visible');
     await wait(200);
 
     this._switchFrame(frameTransition, frameReveal);
-    spotlightDim.classList.remove('animate');
-    spotlightDim.style.opacity = '0';
+    if (spotlightDim) {
+      spotlightDim.classList.remove('animate');
+      gsap.set(spotlightDim, { autoAlpha: 0 });
+    }
+
+    const dur = _reducedMotion ? 0 : 1;
+    const spotBright = this.$('.spotlight-cone--bright');
+    const spotAccent = this.$('.spotlight-cone--accent');
+    const spotTargets = [spotBright, spotAccent].filter(Boolean);
+    await new Promise((resolve) => {
+      if (spotTargets.length === 0) {
+        resolve();
+        return;
+      }
+      gsap.to(spotTargets, {
+        autoAlpha: 0.3,
+        duration: 1.2 * dur,
+        ease: 'power2.out',
+        onComplete: resolve,
+      });
+    });
     await wait(100);
     this._animateRevealElements();
 
