@@ -261,8 +261,11 @@
     const labels = await Promise.all(skins.map(async (skinId) => {
       try {
         const data = await gql(GET_THEME_METADATA, { themeId: skinId });
-        const name = data?.getThemeMetadata?.name;
-        return { id: skinId, name: name || skinId };
+        const tm = data?.getThemeMetadata;
+        if (tm?.themeId === skinId && tm.name) {
+          return { id: skinId, name: tm.name };
+        }
+        throw new Error('theme not registered in GQL, falling back to skin.json');
       } catch {
         try {
           const res = await fetch('skins/' + skinId + '/skin.json', { cache: 'no-store' });

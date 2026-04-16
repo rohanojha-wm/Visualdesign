@@ -321,7 +321,7 @@ export class HBOStageReveal {
 
   static defaults = {
     skin: 'default',
-    availableSkins: ['default', 'batman', 'harry-potter', 'halloween', 'game-of-thrones', 'the-last-of-us', 'euphoria', 'house-of-dragon', 'succession', 'white-lotus', 'true-detective'],
+    availableSkins: ['default', 'batman', 'harry-potter', 'halloween', 'game-of-thrones', 'the-last-of-us'],
     introVideoId: null,
     graphqlEndpoint: 'http://localhost:8000/graphql',
     showSkinPicker: true,
@@ -731,7 +731,9 @@ export class HBOStageReveal {
       try {
         const data = await this._gql(GET_THEME_METADATA, { themeId: skinId });
         const tm = data?.getThemeMetadata;
-        if (tm) {
+        // Only use GQL result if themeId matches — server falls back to default
+        // for unregistered skins, which would apply wrong metadata.
+        if (tm?.themeId === skinId) {
           if (this._themeMetadataCache) this._themeMetadataCache.set(skinId, tm);
           manifest = manifestFromThemeMetadata(tm);
         }
@@ -937,8 +939,13 @@ export class HBOStageReveal {
     const labels = await Promise.all(skins.map(async (skinId) => {
       try {
         const data = await this._gql(GET_THEME_METADATA, { themeId: skinId });
-        const name = data?.getThemeMetadata?.name;
-        return { id: skinId, name: name || skinId };
+        const tm = data?.getThemeMetadata;
+        // If the returned themeId doesn't match, the server fell back to the
+        // default theme — ignore it and fall through to skin.json.
+        if (tm?.themeId === skinId && tm.name) {
+          return { id: skinId, name: tm.name };
+        }
+        throw new Error('theme not registered in GQL, falling back to skin.json');
       } catch {
         try {
           const res = await fetch('skins/' + skinId + '/skin.json', { cache: 'no-store' });
@@ -1686,12 +1693,10 @@ export class HBOStageReveal {
               this._animateRevealElements();
               return;
             }
-            this._applyShow(show);
             if (this.config.onReveal) this.config.onReveal(show);
             this._createParticles(this.$('.particles-reveal'), 25);
-
-            this._resetRevealElements();
-            this._animateRevealElements();
+            // _dramaticReveal handles _applyShow → _resetRevealElements → _animateRevealElements.
+            await this._dramaticReveal(show);
           } finally {
             this.isAnimating = false;
           }
@@ -1717,6 +1722,112 @@ export class HBOStageReveal {
       }, 0);
     }
     if (glow) tl.to(glow, { autoAlpha: 0, duration: 0.25 * dur, ease: 'power2.in' }, 0);
+  }
+
+  /**
+   * Dramatic "Try Another" reveal: a horizontal slot-machine strip spins
+   * inside the content card — each slide fills the card and shows the show's
+   * image, title and description. Decelerates with power4.out and snaps to
+   * the real winner before the normal reveal sequence plays.
+   * Falls back to the plain reveal when prefers-reduced-motion is set.
+   */
+  async _dramaticReveal(show) {
+    if (_reducedMotion) {
+      this._applyShow(show);
+      this._resetRevealElements();
+      this._animateRevealElements();
+      return;
+    }
+
+    const card = this.$('.content-card');
+
+    // Reveal the card shell so the slot machine is visible.
+    gsap.set(card, { autoAlpha: 1, scale: 1 });
+
+    // Build item list: shuffled decoys first, winner last.
+    const decoys = [...this.allItems]
+      .filter(s => s.id !== show.id)
+      .sort(() => Math.random() - 0.5)
+      .slice(0, 6);
+    const items     = [...decoys, show];
+    const winnerIdx = items.length - 1;
+
+    // ── Build slot strip ────────────────────────────────
+    const strip = document.createElement('div');
+    strip.className = 'slot-strip';
+
+    for (const [i, item] of items.entries()) {
+      const slide = document.createElement('div');
+      slide.className = 'slot-slide' + (i === winnerIdx ? ' is-winner' : '');
+      if (item.image) {
+        slide.style.backgroundImage = `url(${item.image})`;
+      }
+
+      const label = document.createElement('div');
+      label.className = 'slot-label';
+
+      const titleEl = document.createElement('div');
+      titleEl.className = 'slot-title';
+      titleEl.textContent = item.title;
+
+      const descEl = document.createElement('div');
+      descEl.className = 'slot-desc';
+      descEl.textContent = item.description || '';
+
+      label.appendChild(titleEl);
+      label.appendChild(descEl);
+      slide.appendChild(label);
+      strip.appendChild(slide);
+    }
+
+    card.appendChild(strip);
+
+    // Each slide is 100% of the card's rendered width.
+    const slideW = card.offsetWidth || 600;
+    const xEnd   = -(winnerIdx * slideW);   // shift so winner is in view
+
+    gsap.set(strip, { x: 0 });
+
+    // ── Spin: fast start, power4.out deceleration ───────
+    const SPIN_DUR = 2.5;
+    await new Promise(r => gsap.to(strip, {
+      x: xEnd,
+      duration: SPIN_DUR,
+      ease: 'power4.out',
+      onComplete: r,
+    }));
+
+    // ── Winner lock-in: flash + accent glow ─────────────
+    const winnerSlide = strip.querySelector('.is-winner');
+    if (winnerSlide) {
+      winnerSlide.classList.add('is-active');
+      gsap.fromTo(winnerSlide,
+        { filter: 'brightness(2.2)' },
+        { filter: 'brightness(1)', duration: 0.45, ease: 'power2.out' },
+      );
+    }
+
+    const glow = this.$('.stage-glow');
+    if (glow) {
+      gsap.fromTo(glow,
+        { autoAlpha: 0 },
+        { autoAlpha: 0.7, duration: 0.3, ease: 'power2.out' },
+      );
+    }
+
+    // ── Hold on winner, then hand off to full reveal ─────
+    await new Promise(r => gsap.delayedCall(0.5, r));
+
+    // Fade the strip, reset the card state, run normal reveal.
+    await new Promise(r => gsap.to(strip, { autoAlpha: 0, duration: 0.25, onComplete: r }));
+    strip.remove();
+    if (glow) gsap.set(glow, { autoAlpha: 0 });
+
+    this._applyShow(show);
+    // clearProps resets card back to CSS opacity:0 so _animateRevealElements
+    // can tween it in cleanly from scratch.
+    this._resetRevealElements();
+    this._animateRevealElements();
   }
 
   _goHome() {
