@@ -1,0 +1,68 @@
+/* The White Lotus skin — tropical luxury, deep ocean teal + warm coral gold */
+
+.hbo-stage[data-skin="white-lotus"] {
+  --accent: #e8a840;
+  --accent-rgb: 232, 168, 64;
+  --bg-tint-rgb: 20, 100, 100;
+  --reveal-bg-top: #010c0e;
+  --reveal-bg-mid: #021416;
+  --reveal-bg-bot: #011012;
+  --cinematic-grad: linear-gradient(170deg, #020e10 0%, #031618 30%, #021214 60%, #041a1c 100%);
+  --btn-primary-bg: #e8a840;
+  --btn-primary-color: #0a0805;
+  --btn-primary-hover: #f0c060;
+  --btn-secondary-border: #1a5050;
+  --btn-secondary-color: #60c0b0;
+  --particle-rgb: 232, 168, 64;
+}
+
+/* Idle — warm tropical atmospheric glow */
+.hbo-stage[data-skin="white-lotus"] .skin-hero--idle {
+  display: block;
+  background:
+    radial-gradient(ellipse at 50% 70%, rgba(20, 140, 130, 0.08) 0%, transparent 50%),
+    radial-gradient(ellipse at 20% 80%, rgba(232, 168, 64, 0.05) 0%, transparent 40%),
+    radial-gradient(ellipse at 80% 60%, rgba(30, 160, 150, 0.04) 0%, transparent 35%);
+}
+
+/* Transition */
+.hbo-stage[data-skin="white-lotus"] .skin-hero--transition {
+  display: block;
+  background: radial-gradient(ellipse at 50% 50%, rgba(232, 168, 64, 0.08) 0%, transparent 60%);
+}
+
+/* Reveal — golden tropical light above card */
+.hbo-stage[data-skin="white-lotus"] .skin-hero--reveal {
+  display: block;
+}
+
+.hbo-stage[data-skin="white-lotus"] .skin-hero--reveal::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 750px;
+  height: 100%;
+  background:
+    radial-gradient(ellipse at 50% 10%, rgba(232, 168, 64, 0.14) 0%, rgba(20, 140, 130, 0.06) 40%, transparent 65%),
+    radial-gradient(ellipse at 50% 85%, rgba(20, 140, 130, 0.08) 0%, transparent 40%);
+  opacity: 0;
+  z-index: 10;
+}
+
+.hbo-stage[data-skin="white-lotus"] .skin-hero--reveal.animate::after {
+  animation: lotusGlowIn 1.6s ease 0.5s forwards;
+}
+
+@keyframes lotusGlowIn {
+  0% { opacity: 0; }
+  100% { opacity: 1; }
+}
+
+/* Warm gold + teal stage glow */
+.hbo-stage[data-skin="white-lotus"] .stage-glow {
+  background:
+    radial-gradient(ellipse at center, rgba(232, 168, 64, 0.35) 0%, rgba(20, 140, 130, 0.12) 40%, transparent 65%),
+    radial-gradient(ellipse at center, rgba(30, 180, 160, 0.06) 0%, transparent 50%);
+}

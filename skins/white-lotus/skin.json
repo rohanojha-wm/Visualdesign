@@ -1,0 +1,18 @@
+{
+  "id": "white-lotus",
+  "name": "The White Lotus",
+  "fontFamily": "inherit",
+  "moodText": "Tonight, you deserve",
+  "idle": {
+    "title": "Your Escape Awaits",
+    "buttonText": "Check In"
+  },
+  "reveal": {
+    "watchButtonText": "Escape Now",
+    "anotherButtonText": "A Different Suite"
+  },
+  "particleColor": "232, 168, 64",
+  "scatterFiles": ["scatter/icon-1.svg", "scatter/icon-2.svg"],
+  "scatterCount": 80,
+  "ambientVolume": 0.15
+}
