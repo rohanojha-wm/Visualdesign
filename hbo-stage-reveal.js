@@ -1,3 +1,13 @@
+import { gsap } from 'https://esm.sh/gsap@3.13.0';
+
+// Module-level reduced-motion flag — read by every tween helper below
+const _mm = gsap.matchMedia();
+let _reducedMotion = false;
+_mm.add(
+  { reduceMotion: '(prefers-reduced-motion: reduce)' },
+  (ctx) => { _reducedMotion = ctx.conditions.reduceMotion; },
+);
+
 /** Maps first genre value from config → `data-theme` slug (must match hbo-stage-reveal.css) */
 const GENRE_THEMES = {
   comedy: 'comedy',
