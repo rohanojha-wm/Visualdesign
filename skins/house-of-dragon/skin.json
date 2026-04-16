@@ -1,0 +1,18 @@
+{
+  "id": "house-of-dragon",
+  "name": "House of the Dragon",
+  "fontFamily": "inherit",
+  "moodText": "For the realm, you need",
+  "idle": {
+    "title": "The Realm Awaits Your Verdict",
+    "buttonText": "Claim Your Watch"
+  },
+  "reveal": {
+    "watchButtonText": "Claim It",
+    "anotherButtonText": "A Different Throne"
+  },
+  "particleColor": "212, 100, 20",
+  "scatterFiles": ["scatter/icon-1.svg", "scatter/icon-2.svg"],
+  "scatterCount": 75,
+  "ambientVolume": 0.15
+}

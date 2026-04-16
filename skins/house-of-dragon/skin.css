@@ -1,0 +1,68 @@
+/* House of the Dragon skin — deep crimson + molten gold */
+
+.hbo-stage[data-skin="house-of-dragon"] {
+  --accent: #d4701a;
+  --accent-rgb: 212, 112, 26;
+  --bg-tint-rgb: 160, 30, 10;
+  --reveal-bg-top: #0c0100;
+  --reveal-bg-mid: #160302;
+  --reveal-bg-bot: #120201;
+  --cinematic-grad: linear-gradient(170deg, #0e0100 0%, #180402 30%, #120302 60%, #1c0503 100%);
+  --btn-primary-bg: #d4701a;
+  --btn-primary-color: #fff4e0;
+  --btn-primary-hover: #e88030;
+  --btn-secondary-border: #7a2a08;
+  --btn-secondary-color: #e0a060;
+  --particle-rgb: 212, 100, 20;
+}
+
+/* Idle — ember glow at base */
+.hbo-stage[data-skin="house-of-dragon"] .skin-hero--idle {
+  display: block;
+  background:
+    radial-gradient(ellipse at 50% 80%, rgba(212, 80, 20, 0.08) 0%, transparent 50%),
+    radial-gradient(ellipse at 30% 90%, rgba(160, 30, 10, 0.06) 0%, transparent 40%),
+    radial-gradient(ellipse at 70% 85%, rgba(212, 112, 26, 0.05) 0%, transparent 35%);
+}
+
+/* Transition — dragonfire burst */
+.hbo-stage[data-skin="house-of-dragon"] .skin-hero--transition {
+  display: block;
+  background: radial-gradient(ellipse at 50% 50%, rgba(212, 80, 20, 0.12) 0%, transparent 60%);
+}
+
+/* Reveal — fire glow above and below card */
+.hbo-stage[data-skin="house-of-dragon"] .skin-hero--reveal {
+  display: block;
+}
+
+.hbo-stage[data-skin="house-of-dragon"] .skin-hero--reveal::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 800px;
+  height: 100%;
+  background:
+    radial-gradient(ellipse at 50% 10%, rgba(212, 80, 20, 0.18) 0%, rgba(160, 30, 10, 0.08) 35%, transparent 60%),
+    radial-gradient(ellipse at 50% 90%, rgba(212, 112, 26, 0.10) 0%, transparent 40%);
+  opacity: 0;
+  z-index: 10;
+}
+
+.hbo-stage[data-skin="house-of-dragon"] .skin-hero--reveal.animate::after {
+  animation: hotdGlowIn 1.4s ease 0.4s forwards;
+}
+
+@keyframes hotdGlowIn {
+  0% { opacity: 0; }
+  100% { opacity: 1; }
+}
+
+/* Molten stage glow */
+.hbo-stage[data-skin="house-of-dragon"] .stage-glow {
+  background:
+    radial-gradient(ellipse at center, rgba(212, 80, 20, 0.45) 0%, rgba(160, 30, 10, 0.18) 35%, transparent 65%),
+    radial-gradient(ellipse at center, rgba(255, 160, 40, 0.06) 0%, transparent 50%);
+}
