@@ -894,12 +894,12 @@
   transition: box-shadow 0.8s ease;
   /* Fade left/right edges so background scatter images bleed through */
   -webkit-mask-image:
-    linear-gradient(to right, transparent 0%, black 9%, black 91%, transparent 100%),
-    linear-gradient(to bottom, black 0%, black 88%, transparent 100%);
+    linear-gradient(to right, transparent 0%, black 16%, black 84%, transparent 100%),
+    linear-gradient(to bottom, black 0%, black 78%, transparent 100%);
   -webkit-mask-composite: source-in;
   mask-image:
-    linear-gradient(to right, transparent 0%, black 9%, black 91%, transparent 100%),
-    linear-gradient(to bottom, black 0%, black 88%, transparent 100%);
+    linear-gradient(to right, transparent 0%, black 16%, black 84%, transparent 100%),
+    linear-gradient(to bottom, black 0%, black 78%, transparent 100%);
   mask-composite: intersect;
 }
 
